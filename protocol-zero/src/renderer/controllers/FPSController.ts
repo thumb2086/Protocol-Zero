@@ -28,6 +28,7 @@ export class FPSController {
         this.camera.speed = 0
         this.camera.fov = 1.2 // Wide FOV like Valorant
         this.camera.minZ = 0.01 // Very close near plane for weapon
+        this.camera.inertia = 0 // No mouse smoothing/acceleration
 
         // Collision & Gravity
         this.camera.checkCollisions = true
@@ -73,7 +74,12 @@ export class FPSController {
         // Key Down/Up
         this.scene.onKeyboardObservable.add((kbInfo) => {
             if (kbInfo.type === KeyboardEventTypes.KEYDOWN) {
-                this.inputMap[kbInfo.event.key.toLowerCase()] = true
+                const key = kbInfo.event.key.toLowerCase()
+                this.inputMap[key] = true
+
+                if (key === 'r') {
+                    this.reload()
+                }
             }
             if (kbInfo.type === KeyboardEventTypes.KEYUP) {
                 this.inputMap[kbInfo.event.key.toLowerCase()] = false
@@ -102,29 +108,54 @@ export class FPSController {
         weaponMesh.scaling = new Vector3(0.2, 0.2, 0.2) // Scale down for FP view
     }
 
+    private moveVelocity: Vector3 = Vector3.Zero()
+    private acceleration: number = 0.15 // Fast acceleration (Snappy)
+    private friction: number = 0.75     // Fast deceleration (Stops quickly)
+    private maxSpeed: number = 0.2
+
     public update() {
         // Only process movement if pointer is locked
         if (!this.isLocked) return
 
-        // Movement direction
+        // Movement direction (Projected on XZ plane)
         const forward = this.camera.getDirection(Axis.Z)
+        forward.y = 0
+        forward.normalize()
+
         const right = this.camera.getDirection(Axis.X)
+        right.y = 0
+        right.normalize()
 
-        let movement = Vector3.Zero()
+        let inputDir = Vector3.Zero()
 
-        if (this.inputMap['w']) movement.addInPlace(forward)
-        if (this.inputMap['s']) movement.addInPlace(forward.scale(-1))
-        if (this.inputMap['a']) movement.addInPlace(right.scale(-1))
-        if (this.inputMap['d']) movement.addInPlace(right)
+        if (this.inputMap['w']) inputDir.addInPlace(forward)
+        if (this.inputMap['s']) inputDir.addInPlace(forward.scale(-1))
+        if (this.inputMap['a']) inputDir.addInPlace(right.scale(-1))
+        if (this.inputMap['d']) inputDir.addInPlace(right)
 
-        // Normalize diagonal movement
-        if (movement.length() > 0) {
-            movement.normalize().scaleInPlace(this.moveSpeed)
+        // Normalize input to ensure consistent speed in all directions
+        if (inputDir.length() > 0) {
+            inputDir.normalize()
+
+            // Apply acceleration
+            this.moveVelocity.addInPlace(inputDir.scale(this.acceleration))
+
+            // Cap speed
+            if (this.moveVelocity.length() > this.maxSpeed) {
+                this.moveVelocity.normalize().scaleInPlace(this.maxSpeed)
+            }
+        } else {
+            // Apply friction (Decelerate)
+            this.moveVelocity.scaleInPlace(this.friction)
+
+            // Stop completely if very slow
+            if (this.moveVelocity.length() < 0.001) {
+                this.moveVelocity = Vector3.Zero()
+            }
         }
 
-        // Apply movement only on XZ plane (don't fly)
-        movement.y = 0
-        this.camera.position.addInPlace(movement)
+        // Apply movement
+        this.camera.position.addInPlace(this.moveVelocity)
 
         // Gravity
         if (!this.grounded) {
@@ -150,12 +181,39 @@ export class FPSController {
         }
     }
 
+    // Ammo System
+    private currentAmmo: number = 25
+    private reserveAmmo: number = 75
+    private maxAmmo: number = 25
+    private isReloading: boolean = false
+    private hudController: any = null // Type 'any' to avoid circular dependency for now, or import interface
+
+    public setHUD(hud: any) {
+        this.hudController = hud
+        this.updateHUD()
+    }
+
+    private updateHUD() {
+        if (this.hudController) {
+            this.hudController.updateAmmo(this.currentAmmo, this.reserveAmmo)
+        }
+    }
+
     public setSensitivity(sensitivity: number) {
         this.camera.angularSensibility = 2000 / sensitivity
     }
 
     private shoot() {
-        if (!this.isLocked) return
+        if (!this.isLocked || this.isReloading) return
+
+        if (this.currentAmmo <= 0) {
+            this.reload()
+            return
+        }
+
+        // Decrement Ammo
+        this.currentAmmo--
+        this.updateHUD()
 
         // Raycast from center of screen
         const origin = this.camera.position
@@ -181,11 +239,9 @@ export class FPSController {
         // Fade out trail
         setTimeout(() => {
             trail.dispose()
-        }, 100)
+        }, 50)
 
         if (hit?.pickedMesh) {
-            console.log('Hit:', hit.pickedMesh.name)
-
             // Visual: Hit Marker
             const marker = MeshBuilder.CreateSphere('hit', { diameter: 0.1 }, this.scene)
             marker.position = hit.pickedPoint!
@@ -195,8 +251,45 @@ export class FPSController {
 
             setTimeout(() => {
                 marker.dispose()
-            }, 500)
+            }, 200)
+
+            // Target Destruction Logic
+            if (hit.pickedMesh.metadata && hit.pickedMesh.metadata.isTarget) {
+                console.log('Target Hit!', hit.pickedMesh.name)
+
+                // Show kill feed
+                if (this.hudController) {
+                    this.hudController.showKillFeed('Player', 'Training_Bot', 'Vandal', hit.pickedMesh.metadata.isHeadshot)
+                }
+
+                // Destroy target
+                hit.pickedMesh.dispose()
+
+                // If it has a parent (like the target center), dispose that too or handle it
+                // In MapGenerator, center is separate mesh but logically part of target. 
+                // Actually MapGenerator creates outer and center separately. 
+                // Ideally we should group them, but for now let's just dispose what we hit.
+            }
         }
+    }
+
+    private reload() {
+        if (this.isReloading || this.currentAmmo === this.maxAmmo || this.reserveAmmo <= 0) return
+
+        console.log('Reloading...')
+        this.isReloading = true
+
+        // Simulate reload time
+        setTimeout(() => {
+            const needed = this.maxAmmo - this.currentAmmo
+            const toAdd = Math.min(needed, this.reserveAmmo)
+
+            this.currentAmmo += toAdd
+            this.reserveAmmo -= toAdd
+            this.isReloading = false
+            this.updateHUD()
+            console.log('Reload Complete')
+        }, 2000) // 2 seconds reload
     }
 
     public getCamera(): UniversalCamera {

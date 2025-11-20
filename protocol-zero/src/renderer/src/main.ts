@@ -9,6 +9,7 @@ import { CharacterGenerator } from '../generators/CharacterGenerator'
 import { WeaponAssembler } from '../generators/WeaponAssembler'
 import { FPSController } from '../controllers/FPSController'
 import { MapGenerator } from '../generators/MapGenerator'
+import { HUDController } from '../controllers/HUDController'
 
 console.log('Protocol: Zero - Renderer Process Started')
 
@@ -66,9 +67,12 @@ async function initGame() {
             gaia.rotation.y = Math.PI / 2
 
             // UI Management
+            const hud = new HUDController()
+            fpsController.setHUD(hud) // Connect FPS Controller to HUD
             const uiHint = document.getElementById('ui-hint')
-            const settingsPanel = document.getElementById('settings-panel')
+            const gameHud = document.getElementById('game-hud')
             const crosshair = document.getElementById('crosshair')
+            const settingsPanel = document.getElementById('settings-panel')
             const sensitivitySlider = document.getElementById('sensitivity-slider') as HTMLInputElement
             const sensitivityValue = document.getElementById('sensitivity-value')
 
@@ -85,14 +89,22 @@ async function initGame() {
             document.addEventListener('pointerlockchange', () => {
                 if (document.pointerLockElement) {
                     if (uiHint) uiHint.style.display = 'none'
-                    if (settingsPanel) settingsPanel.style.display = 'none'
+                    if (gameHud) gameHud.style.display = 'block'
                     if (crosshair) crosshair.style.display = 'block'
+                    if (settingsPanel) settingsPanel.style.display = 'none'
                 } else {
-                    if (uiHint) uiHint.style.display = 'block'
-                    if (settingsPanel) settingsPanel.style.display = 'block'
+                    if (uiHint) uiHint.style.display = 'flex' // Flex for centering
+                    if (gameHud) gameHud.style.display = 'none'
                     if (crosshair) crosshair.style.display = 'none'
+                    if (settingsPanel) settingsPanel.style.display = 'block'
                 }
             })
+
+            // Test HUD Update (Simulate some data)
+            hud.updateHealth(100)
+            hud.updateArmor(50)
+            hud.updateAmmo(25, 75)
+            hud.showKillFeed('Player', 'Bot_Vector', 'Vandal', true)
 
             // Render Loop
             engine.runRenderLoop(() => {

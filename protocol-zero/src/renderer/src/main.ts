@@ -1,7 +1,7 @@
-import { Engine, Scene, Vector3, HemisphericLight, ArcRotateCamera, Color4 } from '@babylonjs/core'
-import { Engine, Scene, Vector3, HemisphericLight, ArcRotateCamera, Color4 } from '@babylonjs/core'
+import { Engine, Scene, Vector3, HemisphericLight, Color4 } from '@babylonjs/core'
 import { CharacterGenerator } from '../generators/CharacterGenerator'
 import { WeaponAssembler } from '../generators/WeaponAssembler'
+import { FPSController } from '../controllers/FPSController'
 
 console.log('Renderer process started')
 
@@ -14,11 +14,10 @@ try {
 
     const createScene = () => {
         const scene = new Scene(engine)
-        scene.clearColor = new Color4(0.2, 0.2, 0.3, 1) // Lighter Blue-ish for debug
+        scene.clearColor = new Color4(0.1, 0.1, 0.15, 1) // Dark Navy
 
-        // Camera
-        const camera = new ArcRotateCamera('camera1', -Math.PI / 2, Math.PI / 2.5, 10, Vector3.Zero(), scene)
-        camera.attachControl(canvas, true)
+        // FPS Controller (First Person Camera)
+        const fpsController = new FPSController(scene, new Vector3(0, 1.6, -5))
 
         // Light
         const light = new HemisphericLight('light1', new Vector3(0, 1, 0), scene)
@@ -42,12 +41,23 @@ try {
         const phantom = weaponGen.generatePhantom(new Vector3(2, 1, 2))
         phantom.rotation.y = -Math.PI / 2
 
-        return scene
+        return { scene, fpsController }
     }
 
-    const scene = createScene()
+    const { scene, fpsController } = createScene()
+
+    // UI hint management
+    const uiHint = document.getElementById('ui-hint')
+    document.addEventListener('pointerlockchange', () => {
+        if (document.pointerLockElement) {
+            if (uiHint) uiHint.style.display = 'none'
+        } else {
+            if (uiHint) uiHint.style.display = 'block'
+        }
+    })
 
     engine.runRenderLoop(() => {
+        fpsController.update()
         scene.render()
     })
 

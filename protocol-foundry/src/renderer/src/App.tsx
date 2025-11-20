@@ -1,8 +1,17 @@
 import React from 'react'
 import Editor from './components/Editor'
 import Scene from './components/Scene'
+import { useWeaponStore, WeaponType } from './store'
 
 function App(): JSX.Element {
+    const { weaponType, setWeaponType } = useWeaponStore()
+
+    const weaponButtons: { type: WeaponType; label: string }[] = [
+        { type: 'knife', label: 'KNIFE' },
+        { type: 'pistol', label: 'PISTOL' },
+        { type: 'rifle', label: 'RIFLE' }
+    ]
+
     return (
         <div className="flex h-screen w-screen bg-gray-900 text-white overflow-hidden">
             {/* Left Panel: Editor */}
@@ -33,9 +42,37 @@ function App(): JSX.Element {
                         <label className="block text-xs text-gray-400 mb-1">STATUS</label>
                         <div className="text-green-400 text-sm">● SYSTEM ONLINE</div>
                     </div>
-                    {/* Placeholders for future controls */}
+
+                    {/* Weapon Type Selector */}
+                    <div>
+                        <label className="block text-xs text-gray-400 mb-2">WEAPON TYPE</label>
+                        <div className="space-y-2">
+                            {weaponButtons.map(({ type, label }) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setWeaponType(type)}
+                                    className={`w-full px-4 py-2 text-sm font-mono transition-all ${weaponType === type
+                                        ? 'bg-blue-600 text-white border-blue-400'
+                                        : 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
+                                        } border rounded`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Current Weapon Display */}
+                    <div>
+                        <label className="block text-xs text-gray-400 mb-1">ACTIVE WEAPON</label>
+                        <div className="text-blue-400 text-sm font-mono uppercase">
+                            {weaponType}
+                        </div>
+                    </div>
+
+                    {/* Placeholder */}
                     <div className="p-4 border border-dashed border-gray-600 rounded opacity-50 text-center text-xs">
-                        SIMULATION CONTROLS COMING SOON
+                        CUSTOMIZATION CONTROLS COMING SOON
                     </div>
                 </div>
             </div>

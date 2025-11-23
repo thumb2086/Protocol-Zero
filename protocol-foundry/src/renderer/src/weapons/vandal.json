@@ -1,0 +1,117 @@
+{
+    "name": "Vandal",
+    "parts": [
+        {
+            "name": "Receiver",
+            "type": "extrusion",
+            "profile": "Trapezoid",
+            "profileParams": [
+                0.8,
+                1.2,
+                1.5
+            ],
+            "length": 6.0,
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "color": "#2c3e50"
+        },
+        {
+            "name": "TopRail",
+            "type": "extrusion",
+            "profile": "Rail",
+            "profileParams": [
+                0.8,
+                0.3
+            ],
+            "length": 6.0,
+            "position": {
+                "x": 0,
+                "y": 0.9,
+                "z": 0
+            },
+            "color": "#1a1a1a",
+            "parent": "Receiver"
+        },
+        {
+            "name": "Barrel",
+            "type": "extrusion",
+            "profile": "Rectangle",
+            "profileParams": [
+                0.4,
+                0.4
+            ],
+            "length": 4.0,
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 3.0
+            },
+            "color": "#000000",
+            "parent": "Receiver"
+        },
+        {
+            "name": "Magazine",
+            "type": "extrusion",
+            "profile": "Rectangle",
+            "profileParams": [
+                0.6,
+                1.5
+            ],
+            "path": [
+                {
+                    "x": 0,
+                    "y": -0.5,
+                    "z": 1.0
+                },
+                {
+                    "x": 0,
+                    "y": -1.5,
+                    "z": 0.8
+                },
+                {
+                    "x": 0,
+                    "y": -2.5,
+                    "z": 0.5
+                },
+                {
+                    "x": 0,
+                    "y": -3.5,
+                    "z": 0.0
+                }
+            ],
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "color": "#e67e22",
+            "parent": "Receiver"
+        },
+        {
+            "name": "Stock",
+            "type": "extrusion",
+            "profile": "SkeletonTriangle",
+            "profileParams": [
+                2.0,
+                3.0,
+                0.5
+            ],
+            "length": 0.5,
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": -3.0
+            },
+            "rotation": {
+                "x": 0,
+                "y": 3.14159,
+                "z": 0
+            },
+            "color": "#2c3e50",
+            "parent": "Receiver"
+        }
+    ]
+}

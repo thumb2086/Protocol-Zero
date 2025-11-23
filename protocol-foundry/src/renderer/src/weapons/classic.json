@@ -1,0 +1,94 @@
+{
+    "name": "Classic",
+    "parts": [
+        {
+            "name": "Slide",
+            "type": "extrusion",
+            "profile": "ChamferedRectangle",
+            "profileParams": [
+                0.8,
+                1.0,
+                0.2
+            ],
+            "length": 4.0,
+            "position": {
+                "x": 0,
+                "y": 1.5,
+                "z": 0
+            },
+            "color": "#2c3e50"
+        },
+        {
+            "name": "Barrel",
+            "type": "extrusion",
+            "profile": "Rectangle",
+            "profileParams": [
+                0.4,
+                0.4
+            ],
+            "length": 4.2,
+            "position": {
+                "x": 0,
+                "y": 1.5,
+                "z": 0.1
+            },
+            "color": "#000000",
+            "parent": "Slide"
+        },
+        {
+            "name": "Grip",
+            "type": "extrusion",
+            "profile": "ClassicGrip",
+            "length": 0.8,
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "color": "#34495e"
+        },
+        {
+            "name": "TriggerGuard",
+            "type": "extrusion",
+            "profile": "Rectangle",
+            "profileParams": [
+                0.1,
+                0.5
+            ],
+            "path": [
+                {
+                    "x": 0.5,
+                    "y": -0.2,
+                    "z": 0
+                },
+                {
+                    "x": 1.2,
+                    "y": -0.2,
+                    "z": 0
+                },
+                {
+                    "x": 1.2,
+                    "y": -0.8,
+                    "z": 0
+                },
+                {
+                    "x": 0.5,
+                    "y": -0.8,
+                    "z": 0
+                }
+            ],
+            "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+            },
+            "color": "#2c3e50",
+            "parent": "Grip"
+        }
+    ]
+}

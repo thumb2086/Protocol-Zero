@@ -39,12 +39,16 @@ export class Graphics {
     // 關鍵：把相機加入場景，確保掛在相機上的子物件（如武器模型）能被渲染
     this.scene.add(this.camera);
 
-    // 簡單環境光與參考物
-    const light = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(light);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-    dir.position.set(5, 10, 7);
-    this.scene.add(dir);
+    // 光照設置：模擬太陽光從上方照射
+    // 降低環境光強度，讓方向光產生明顯的明暗對比
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    this.scene.add(ambientLight);
+
+    // 主光源（太陽）從上方照射，產生清晰的陰影和高光
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    sunLight.position.set(0, 10, 3); // 從上方稍微偏前方照射
+    sunLight.castShadow = true;
+    this.scene.add(sunLight);
 
     const geo = new THREE.BoxGeometry(1, 1, 1);
     const mat = new THREE.MeshStandardMaterial({ color: 0x3399ff });
@@ -53,7 +57,7 @@ export class Graphics {
 
     // 初始化資源管理器
     this.resourceManager = new ResourceManager(this.renderer.getContext());
-    
+
     // 加載所有遊戲資源
     this.resourceManager.initializeResources().then(() => {
       console.log('遊戲資源載入完成');
@@ -78,10 +82,10 @@ export class Graphics {
 
   render() {
     if (!this.initialized) return;
-    
+
     // 更新粒子系統
     if (this.resourceManager) {
-      this.resourceManager.updateParticles(1/60); // 假設 60fps
+      this.resourceManager.updateParticles(1 / 60); // 假設 60fps
     }
 
     this.renderer.render(this.scene, this.camera);

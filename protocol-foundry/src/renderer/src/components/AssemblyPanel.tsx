@@ -5,9 +5,9 @@ const AssemblyPanel: React.FC = () => {
     const { weaponType, setWeaponType, explodedViewDistance, setExplodedViewDistance } = useWeaponStore()
 
     const weaponTypes: { type: WeaponType; label: string }[] = [
-        { type: 'knife', label: 'KNIFE' },
-        { type: 'pistol', label: 'PISTOL' },
-        { type: 'rifle', label: 'RIFLE' }
+        { type: 'classic', label: 'CLASSIC' },
+        { type: 'vandal', label: 'VANDAL' },
+        { type: 'phantom', label: 'PHANTOM' }
     ]
 
     return (
@@ -27,8 +27,8 @@ const AssemblyPanel: React.FC = () => {
                             key={type}
                             onClick={() => setWeaponType(type)}
                             className={`px-2 py-2 text-[10px] font-mono transition-all border ${weaponType === type
-                                    ? 'bg-blue-600/20 text-blue-300 border-blue-500'
-                                    : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
+                                ? 'bg-blue-600/20 text-blue-300 border-blue-500'
+                                : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700'
                                 } rounded`}
                         >
                             {label}

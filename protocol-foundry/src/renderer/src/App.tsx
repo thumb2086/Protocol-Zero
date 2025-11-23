@@ -9,7 +9,7 @@ import { translations } from './i18n/translations'
 
 type Tab = 'fabrication' | 'assembly' | 'export'
 
-function App(): JSX.Element {
+function App() {
     const [activeTab, setActiveTab] = useState<Tab>('fabrication')
     const { language, setLanguage } = useWeaponStore()
     const t = translations[language]
@@ -59,8 +59,8 @@ function App(): JSX.Element {
                     <button
                         onClick={() => setActiveTab('fabrication')}
                         className={`flex-1 py-3 text-[10px] font-bold tracking-wider transition-colors ${activeTab === 'fabrication'
-                                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
-                                : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
+                            ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
                             }`}
                     >
                         {t.tabFabrication.toUpperCase()}
@@ -68,8 +68,8 @@ function App(): JSX.Element {
                     <button
                         onClick={() => setActiveTab('assembly')}
                         className={`flex-1 py-3 text-[10px] font-bold tracking-wider transition-colors ${activeTab === 'assembly'
-                                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
-                                : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
+                            ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
                             }`}
                     >
                         {t.tabAssembly.toUpperCase()}
@@ -77,8 +77,8 @@ function App(): JSX.Element {
                     <button
                         onClick={() => setActiveTab('export')}
                         className={`flex-1 py-3 text-[10px] font-bold tracking-wider transition-colors ${activeTab === 'export'
-                                ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
-                                : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
+                            ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
+                            : 'text-gray-500 hover:text-gray-300 hover:bg-gray-700'
                             }`}
                     >
                         {t.tabExport.toUpperCase()}

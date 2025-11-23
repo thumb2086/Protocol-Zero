@@ -8,32 +8,11 @@ import { useWeaponStore, WeaponType } from '../store'
 loader.config({ monaco })
 
 const PROTOCOL_TEMPLATES: Record<WeaponType, object> = {
-  knife: {
+  classic: {
     protocol_version: "1.0",
-    weapon_id: "tactical_knife_001",
+    weapon_id: "classic_pistol_001",
     metadata: {
-      name: "Combat Knife",
-      author: "System",
-      created_at: new Date().toISOString()
-    },
-    parts: {
-      blade: {
-        type: "knife_blade",
-        length: 1.0,
-        material: "steel",
-        finish: "satin"
-      },
-      handle: {
-        type: "polymer_grip",
-        texture: "diamond_knurl"
-      }
-    }
-  },
-  pistol: {
-    protocol_version: "1.0",
-    weapon_id: "sidearm_001",
-    metadata: {
-      name: "Standard Sidearm",
+      name: "Classic Pistol",
       author: "System",
       created_at: new Date().toISOString()
     },
@@ -44,11 +23,11 @@ const PROTOCOL_TEMPLATES: Record<WeaponType, object> = {
       magazine: { type: "pistol_mag", capacity: 12 }
     }
   },
-  rifle: {
+  vandal: {
     protocol_version: "1.0",
-    weapon_id: "assault_rifle_001",
+    weapon_id: "vandal_rifle_001",
     metadata: {
-      name: "Assault Rifle",
+      name: "Vandal Assault Rifle",
       author: "System",
       created_at: new Date().toISOString()
     },
@@ -59,6 +38,23 @@ const PROTOCOL_TEMPLATES: Record<WeaponType, object> = {
       magazine: { type: "rifle_mag", capacity: 30 },
       stock: { type: "adjustable_stock" },
       optic: { type: "red_dot_sight" }
+    }
+  },
+  phantom: {
+    protocol_version: "1.0",
+    weapon_id: "phantom_rifle_001",
+    metadata: {
+      name: "Phantom Silenced Rifle",
+      author: "System",
+      created_at: new Date().toISOString()
+    },
+    parts: {
+      receiver: { type: "rifle_receiver", material: "aluminum" },
+      silencer: { type: "integrated_suppressor", length: 0.8 },
+      barrel: { type: "rifle_barrel", length: 1.0 },
+      handguard: { type: "integrated_handguard" },
+      magazine: { type: "rifle_mag", capacity: 25 },
+      stock: { type: "fixed_stock" }
     }
   }
 }

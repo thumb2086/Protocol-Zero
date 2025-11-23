@@ -1,10 +1,11 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { GameServer } from './server'
+// import { GameServer } from './server'
 
-// Initialize UDP Game Server
-const gameServer = new GameServer(41234)
+// Initialize UDP Game Server (可選，用環境變量控制)
+// const ENABLE_GAME_SERVER = process.env.ENABLE_GAME_SERVER !== 'false'
+// const gameServer = ENABLE_GAME_SERVER ? new GameServer(41234) : null
 
 function createWindow(): void {
     const mainWindow = new BrowserWindow({
@@ -43,9 +44,13 @@ app.whenReady().then(() => {
         optimizer.watchWindowShortcuts(window)
     })
 
-    // Start the UDP game server
-    console.log('[Protocol: Zero] Starting Game Server...')
-    gameServer.start()
+    // Start the UDP game server (暫時禁用)
+    // if (ENABLE_GAME_SERVER && gameServer) {
+    //     console.log('[Protocol: Zero] Starting Game Server...')
+    //     gameServer.start()
+    // } else {
+    //     console.log('[Protocol: Zero] Game Server disabled')
+    // }
 
     createWindow()
 
@@ -55,8 +60,10 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
-    console.log('[Protocol: Zero] Stopping Game Server...')
-    gameServer.stop()
+    // if (ENABLE_GAME_SERVER && gameServer) {
+    //     console.log('[Protocol: Zero] Stopping Game Server...')
+    //     gameServer.stop()
+    // }
 
     if (process.platform !== 'darwin') {
         app.quit()

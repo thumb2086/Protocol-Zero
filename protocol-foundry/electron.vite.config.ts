@@ -4,17 +4,36 @@ import { resolve } from 'path'
 
 export default defineConfig({
     main: {
-        plugins: [externalizeDepsPlugin()]
+        plugins: [externalizeDepsPlugin()],
+        build: {
+            lib: {
+                entry: 'src/main/index.ts'
+            }
+        }
     },
     preload: {
-        plugins: [externalizeDepsPlugin()]
+        plugins: [externalizeDepsPlugin()],
+        build: {
+            lib: {
+                entry: 'src/preload/index.ts'
+            }
+        }
     },
     renderer: {
+        root: 'src/renderer',
+        build: {
+            rollupOptions: {
+                input: {
+                    index: resolve(__dirname, 'src/renderer/index.html')
+                }
+            }
+        },
         resolve: {
             alias: {
                 '@renderer': resolve('src/renderer/src')
             }
         },
+        assetsInclude: ['**/*.json'],
         plugins: [react()]
     }
 })

@@ -16,6 +16,9 @@
         "skipLibCheck": true,
         "noEmit": true,
         "baseUrl": ".",
+        "types": [
+            "node"
+        ],
         "paths": {
             "@renderer/*": [
                 "src/renderer/src/*"

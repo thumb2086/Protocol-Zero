@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { Language } from './i18n/translations'
 
-export type WeaponType = 'knife' | 'classic' | 'vandal' | 'phantom'
+export type WeaponType = 'classic' | 'vandal' | 'phantom'
 export type PartType = 'receiver' | 'barrel' | 'handguard' | 'magazine' | 'scope' | 'stock' | 'grip'
 
 export interface WeaponParams {

@@ -1,4 +1,4 @@
-{
+export const phantomBlueprint = {
     "name": "Phantom",
     "parts": [
         {
@@ -116,4 +116,4 @@
             "parent": "Receiver"
         }
     ]
-}
+};

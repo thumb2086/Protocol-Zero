@@ -1,4 +1,4 @@
-{
+export const classicBlueprint = {
     "name": "Classic",
     "parts": [
         {
@@ -91,4 +91,4 @@
             "parent": "Grip"
         }
     ]
-}
+};

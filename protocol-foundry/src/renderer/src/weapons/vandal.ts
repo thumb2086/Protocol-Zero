@@ -1,4 +1,4 @@
-{
+export const vandalBlueprint = {
     "name": "Vandal",
     "parts": [
         {
@@ -114,4 +114,4 @@
             "parent": "Receiver"
         }
     ]
-}
+};

@@ -13,9 +13,10 @@ import { WeaponArchitect, WeaponBlueprint } from '../core/WeaponArchitect'
 import { useWeaponStore } from '../store'
 
 // Import Blueprints
-import classicBlueprint from '../weapons/classic.json'
-import vandalBlueprint from '../weapons/vandal.json'
-import phantomBlueprint from '../weapons/phantom.json'
+// Import Blueprints
+import { classicBlueprint } from '../weapons/classic'
+import { vandalBlueprint } from '../weapons/vandal'
+import { phantomBlueprint } from '../weapons/phantom'
 
 const Scene: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -79,22 +80,31 @@ const Scene: React.FC = () => {
             currentWeaponRef.current = null
         }
 
-        const architect = new WeaponArchitect(sceneRef.current)
-        let blueprint: any = vandalBlueprint
+        const buildWeapon = async () => {
+            try {
+                let mesh: Mesh | null = null;
 
-        if (weaponType === 'classic') blueprint = classicBlueprint
-        if (weaponType === 'phantom') blueprint = phantomBlueprint
-        if (weaponType === 'vandal') blueprint = vandalBlueprint
+                if (weaponType === 'vandal') {
+                    // Use the new Virtual CNC Factory for Vandal
+                    const { VandalFactory } = await import('../core/factory/VandalFactory');
+                    mesh = VandalFactory.create(sceneRef.current!);
+                } else {
+                    // Use legacy Architect for others
+                    const architect = new WeaponArchitect(sceneRef.current!)
+                    let blueprint: any = vandalBlueprint
+                    if (weaponType === 'classic') blueprint = classicBlueprint
+                    if (weaponType === 'phantom') blueprint = phantomBlueprint
 
-        try {
-            const mesh = architect.build(blueprint as WeaponBlueprint)
-            currentWeaponRef.current = mesh
+                    mesh = architect.build(blueprint as WeaponBlueprint)
+                }
 
-            // Center camera on new mesh?
-            // For now, just let it be at 0,0,0
-        } catch (e) {
-            console.error("Failed to build weapon:", e)
-        }
+                currentWeaponRef.current = mesh
+            } catch (e) {
+                console.error("Failed to build weapon:", e)
+            }
+        };
+
+        buildWeapon();
 
     }, [weaponType, classicBlueprint, vandalBlueprint, phantomBlueprint]) // Dependencies for HMR
 

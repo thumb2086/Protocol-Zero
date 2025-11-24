@@ -70,43 +70,40 @@ const Scene: React.FC = () => {
         }
     }, [])
 
-    // Rebuild Weapon when type changes or blueprints update (HMR)
+    // Rebuild Weapon when type changes
     useEffect(() => {
         if (!sceneRef.current) return
 
-        // Dispose old weapon
-        if (currentWeaponRef.current) {
-            currentWeaponRef.current.dispose()
-            currentWeaponRef.current = null
-        }
+        // Import WeaponBuilder
+        import('../core/WeaponBuilder').then(({ WeaponBuilder }) => {
+            // Dispose old weapon completely
+            WeaponBuilder.disposeWeapon(currentWeaponRef.current);
+            currentWeaponRef.current = null;
 
-        const buildWeapon = async () => {
-            try {
-                let mesh: Mesh | null = null;
+            // Create new weapon
+            const builder = new WeaponBuilder(sceneRef.current!);
+            let weapon: Mesh | null = null;
 
-                if (weaponType === 'vandal') {
-                    // Use the new Virtual CNC Factory for Vandal
-                    const { VandalFactory } = await import('../core/factory/VandalFactory');
-                    mesh = VandalFactory.create(sceneRef.current!);
-                } else {
-                    // Use legacy Architect for others
-                    const architect = new WeaponArchitect(sceneRef.current!)
-                    let blueprint: any = vandalBlueprint
-                    if (weaponType === 'classic') blueprint = classicBlueprint
-                    if (weaponType === 'phantom') blueprint = phantomBlueprint
-
-                    mesh = architect.build(blueprint as WeaponBlueprint)
-                }
-
-                currentWeaponRef.current = mesh
-            } catch (e) {
-                console.error("Failed to build weapon:", e)
+            if (weaponType === 'classic') {
+                weapon = builder.createClassic();
+            } else if (weaponType === 'vandal') {
+                weapon = builder.createVandal();
+            } else if (weaponType === 'phantom') {
+                weapon = builder.createPhantom();
             }
+
+            currentWeaponRef.current = weapon;
+        });
+
+        // Cleanup on unmount
+        return () => {
+            import('../core/WeaponBuilder').then(({ WeaponBuilder }) => {
+                WeaponBuilder.disposeWeapon(currentWeaponRef.current);
+                currentWeaponRef.current = null;
+            });
         };
 
-        buildWeapon();
-
-    }, [weaponType, classicBlueprint, vandalBlueprint, phantomBlueprint]) // Dependencies for HMR
+    }, [weaponType])
 
     return (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />

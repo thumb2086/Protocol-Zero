@@ -12,21 +12,21 @@ import { Profiles } from "./profiles";
 
 export interface WeaponPartConfig {
     name: string;
-    type: "extrusion" | "loft" | "custom"; // 'custom' for things like lofts or specific shapes
-    profile?: string; // Key in Profiles
-    profileParams?: any[]; // Arguments for the profile function
-    profileB?: string; // For Loft: End profile
-    profileBParams?: any[]; // For Loft: End profile params
-    customProfile?: Vector3[]; // Direct point array
-    customProfileB?: Vector3[]; // For Loft: End custom profile
-    path?: Vector3[]; // For ExtrudeShape
-    length?: number; // For simple ExtrudePolygon (depth)
+    type: "extrusion" | "loft" | "custom";
+    profile?: string;
+    profileParams?: any[];
+    profileB?: string;
+    profileBParams?: any[];
+    customProfile?: Vector3[];
+    customProfileB?: Vector3[];
+    path?: Vector3[];
+    length?: number;
     position?: { x: number, y: number, z: number };
     rotation?: { x: number, y: number, z: number };
     scaling?: { x: number, y: number, z: number };
-    color?: string; // Hex color
-    parent?: string; // Name of parent part
-    bevel?: boolean; // For extrusion
+    color?: string;
+    parent?: string;
+    bevel?: boolean;
 }
 
 export interface WeaponBlueprint {
@@ -110,25 +110,22 @@ export class WeaponArchitect {
                 shape: shape,
                 path: pathPoints,
                 cap: Mesh.CAP_ALL,
-                adjustFrame: true
-            }, this.scene);
-        } else {
-            // Simple linear extrusion (depth)
-            // Note: ExtrudePolygon extrudes in Y by default, we usually want Z or X. 
-            // Babylon's ExtrudePolygon builds a polygon on XZ plane and extrudes up Y.
-            // Or we can use ExtrudeShape with a straight line.
-            // Let's use ExtrudePolygon for sharp edges and bevel support.
-
-            return MeshBuilder.ExtrudePolygon(config.name, {
-                shape: shape,
-                depth: config.length || 1,
-                wrap: true,
                 sideOrientation: Mesh.DOUBLESIDE
             }, this.scene);
+        } else {
+            // Simple linear extrusion along Z axis
+            const depth = config.length || 1;
+            const path = [
+                new Vector3(0, 0, 0),
+                new Vector3(0, 0, depth)
+            ];
 
-            // Note: ExtrudePolygon creates the shape on the XZ plane and extrudes along Y.
-            // We might need to rotate it to align with the gun's forward direction (usually Z or X).
-            // We'll handle this in the blueprint rotation.
+            return MeshBuilder.ExtrudeShape(config.name, {
+                shape: shape,
+                path: path,
+                cap: Mesh.CAP_ALL,
+                sideOrientation: Mesh.DOUBLESIDE
+            }, this.scene);
         }
     }
 
@@ -167,16 +164,12 @@ export class WeaponArchitect {
 
         // Position Shape B at length
         const length = config.length || 1;
-        // We assume extrusion is along Y axis for the shape definition (Babylon convention for Ribbon paths usually)
-        // But here we want to loft from Z=0 to Z=length.
-        // Profiles are defined in XY plane usually.
 
         // Transform shapes to 3D paths
         const pathA = shapeA.map(p => new Vector3(p.x, p.y, 0));
         const pathB = shapeB.map(p => new Vector3(p.x, p.y, length));
 
         // Create Ribbon
-        // Note: pathA and pathB must have same number of points for best results, or close.
         return MeshBuilder.CreateRibbon(config.name, {
             pathArray: [pathA, pathB],
             closePath: true,

@@ -109,9 +109,9 @@ export class FPSController {
     }
 
     private moveVelocity: Vector3 = Vector3.Zero()
-    private acceleration: number = 0.15 // Fast acceleration (Snappy)
-    private friction: number = 0.75     // Fast deceleration (Stops quickly)
-    private maxSpeed: number = 0.2
+    private acceleration: number = 0.02 // Slower acceleration for weight
+    private friction: number = 0.8      // Quicker stop
+    private maxSpeed: number = 0.08     // ~4.8 m/s at 60fps (Sprint speed)
 
     public update() {
         // Only process movement if pointer is locked

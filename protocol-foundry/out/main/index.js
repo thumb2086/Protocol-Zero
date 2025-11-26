@@ -192,6 +192,77 @@ electron.ipcMain.handle("foundry:getPath", async (_, type, ...parts) => {
     return { success: false, error: error.message };
   }
 });
+electron.ipcMain.handle("github:saveToken", async (_, token) => {
+  try {
+    if (!electron.app.isReady()) {
+      throw new Error("App not ready for secure storage");
+    }
+    const { safeStorage } = require("electron");
+    if (!safeStorage.isEncryptionAvailable()) {
+      console.warn("[GitHub] Encryption not available, storing in plain text (not recommended)");
+      const tokenPath2 = getFoundryPath("github-token.txt");
+      await promises.mkdir(getFoundryPath(), { recursive: true });
+      await promises.writeFile(tokenPath2, token, "utf-8");
+      return { success: true, encrypted: false };
+    }
+    const encrypted = safeStorage.encryptString(token);
+    const tokenPath = getFoundryPath("github-token.enc");
+    await promises.mkdir(getFoundryPath(), { recursive: true });
+    await promises.writeFile(tokenPath, encrypted);
+    console.log("[GitHub] Token saved securely");
+    return { success: true, encrypted: true };
+  } catch (error) {
+    console.error("[GitHub] Failed to save token:", error);
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("github:getToken", async () => {
+  try {
+    if (!electron.app.isReady()) {
+      throw new Error("App not ready for secure storage");
+    }
+    const { safeStorage } = require("electron");
+    const encTokenPath = getFoundryPath("github-token.enc");
+    if (fs.existsSync(encTokenPath)) {
+      if (!safeStorage.isEncryptionAvailable()) {
+        throw new Error("Cannot decrypt token: encryption not available");
+      }
+      const encrypted = await promises.readFile(encTokenPath);
+      const token = safeStorage.decryptString(encrypted);
+      return { success: true, token, encrypted: true };
+    }
+    const plainTokenPath = getFoundryPath("github-token.txt");
+    if (fs.existsSync(plainTokenPath)) {
+      const token = await promises.readFile(plainTokenPath, "utf-8");
+      console.warn("[GitHub] Using plain text token (not encrypted)");
+      return { success: true, token, encrypted: false };
+    }
+    return { success: false, error: "No token found" };
+  } catch (error) {
+    console.error("[GitHub] Failed to get token:", error);
+    return { success: false, error: error.message };
+  }
+});
+electron.ipcMain.handle("github:clearToken", async () => {
+  try {
+    const { unlink } = require("fs/promises");
+    const encTokenPath = getFoundryPath("github-token.enc");
+    const plainTokenPath = getFoundryPath("github-token.txt");
+    const promises2 = [];
+    if (fs.existsSync(encTokenPath)) {
+      promises2.push(unlink(encTokenPath));
+    }
+    if (fs.existsSync(plainTokenPath)) {
+      promises2.push(unlink(plainTokenPath));
+    }
+    await Promise.all(promises2);
+    console.log("[GitHub] Token cleared");
+    return { success: true };
+  } catch (error) {
+    console.error("[GitHub] Failed to clear token:", error);
+    return { success: false, error: error.message };
+  }
+});
 electron.app.whenReady().then(() => {
   electronApp.setAppUserModelId("com.foundry");
   electron.app.on("browser-window-created", (_, window) => {

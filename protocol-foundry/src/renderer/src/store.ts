@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { Language } from './i18n/translations'
+import type { TransformNode, Mesh } from '@babylonjs/core'
 
 export type WeaponType = 'classic' | 'vandal' | 'phantom'
 export type PartType = 'receiver' | 'barrel' | 'handguard' | 'magazine' | 'scope' | 'stock' | 'grip'
@@ -28,11 +29,13 @@ export interface WeaponStore {
     explodedViewDistance: number
     language: Language
     selectedPart: PartType
+    currentWeapon: Mesh | TransformNode | null
     setWeaponType: (type: WeaponType) => void
     updateParams: (params: Partial<WeaponParams>) => void
     setExplodedViewDistance: (dist: number) => void
     setLanguage: (lang: Language) => void
     setSelectedPart: (part: PartType) => void
+    setCurrentWeapon: (weapon: Mesh | TransformNode | null) => void
 }
 
 export const useWeaponStore = create<WeaponStore>((set) => ({
@@ -52,9 +55,11 @@ export const useWeaponStore = create<WeaponStore>((set) => ({
     explodedViewDistance: 0,
     language: 'zh-TW' as Language,
     selectedPart: 'receiver' as PartType,
+    currentWeapon: null,
     setWeaponType: (type) => set({ weaponType: type }),
     updateParams: (newParams) => set((state) => ({ params: { ...state.params, ...newParams } })),
     setExplodedViewDistance: (dist) => set({ explodedViewDistance: dist }),
     setLanguage: (lang) => set({ language: lang }),
-    setSelectedPart: (part) => set({ selectedPart: part })
+    setSelectedPart: (part) => set({ selectedPart: part }),
+    setCurrentWeapon: (weapon) => set({ currentWeapon: weapon })
 }))

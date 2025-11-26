@@ -17,7 +17,7 @@ const Scene: React.FC = () => {
     const sceneRef = useRef<BabylonScene | null>(null)
     const currentWeaponRef = useRef<Mesh | null>(null)
 
-    const { weaponType } = useWeaponStore()
+    const { weaponType, setCurrentWeapon } = useWeaponStore()
 
     // Initialize Engine and Scene ONCE
     useEffect(() => {
@@ -91,6 +91,7 @@ const Scene: React.FC = () => {
 
                 dispose(currentWeaponRef.current)
                 currentWeaponRef.current = null
+                setCurrentWeapon(null) // Sync with store
 
                 const meshCountAfter = sceneRef.current!.meshes.length
                 console.log(`[Scene] ✓ Removed ${meshCountBefore - meshCountAfter} meshes`)
@@ -129,6 +130,7 @@ const Scene: React.FC = () => {
 
                 if (weapon) {
                     currentWeaponRef.current = weapon
+                    setCurrentWeapon(weapon) // Sync with store
                     console.log('[Scene] ✅ Weapon ready!')
                 } else {
                     console.error('[Scene] ❌ Failed to create weapon')

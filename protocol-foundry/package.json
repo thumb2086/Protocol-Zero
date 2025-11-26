@@ -35,6 +35,8 @@
     "zustand": "^5.0.8"
   },
   "dependencies": {
+    "@babylonjs/serializers": "^8.38.0",
+    "@octokit/rest": "^22.0.1",
     "earcut": "^3.0.2",
     "monaco-editor": "^0.54.0"
   }

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Protocol: Zero</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+      font-family: 'Rajdhani', sans-serif;
+      user-select: none;
+    }
+
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    /* Main Menu Panel */
+
+    #main-menu-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(10, 10, 30, 0.95), rgba(20, 10, 40, 0.95));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      pointer-events: all;
+    }
+
+    #main-menu-panel h1 {
+      font-size: 72px;
+      margin: 0 0 60px 0;
+      letter-spacing: 15px;
+      color: #00e5ff;
+      text-shadow: 0 0 30px rgba(0, 229, 255, 0.8), 0 0 60px rgba(0, 229, 255, 0.4);
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+
+      0%,
+      100% {
+        text-shadow: 0 0 30px rgba(0, 229, 255, 0.8), 0 0 60px rgba(0, 229, 255, 0.4);
+      }
+
+      50% {
+        text-shadow: 0 0 40px rgba(0, 229, 255, 1), 0 0 80px rgba(0, 229, 255, 0.6);
+      }
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .menu-btn {
+      padding: 15px 60px;
+      font-size: 28px;
+      font-weight: bold;
+      background: rgba(0, 229, 255, 0.1);
+      border: 2px solid #00e5ff;
+      color: #00e5ff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .menu-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .menu-btn:hover::before {
+      left: 100%;
+    }
+
+    .menu-btn:hover {
+      background: rgba(0, 229, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.5), inset 0 0 20px rgba(0, 229, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .menu-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Foundry Panel */
+
+    #foundry-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(10, 10, 30, 0.95), rgba(30, 10, 20, 0.95));
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      pointer-events: all;
+      overflow: hidden;
+    }
+
+    .foundry-header {
+      padding: 30px 40px;
+      background: rgba(0, 0, 0, 0.5);
+      border-bottom: 2px solid #ff4655;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .foundry-header h2 {
+      font-size: 42px;
+      margin: 0;
+      color: #ff4655;
+      letter-spacing: 8px;
+      text-shadow: 0 0 20px rgba(255, 70, 85, 0.6);
+    }
+
+    .foundry-content {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    .weapon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
+    }
+
+    .weapon-card {
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(0, 229, 255, 0.3);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .weapon-card:hover {
+      border-color: #00e5ff;
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+      transform: translateY(-5px);
+    }
+
+    .weapon-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      color: #00e5ff;
+    }
+
+    .weapon-card p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .weapon-card .weapon-type {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(255, 70, 85, 0.2);
+      border: 1px solid #ff4655;
+      color: #ff4655;
+      font-size: 12px;
+      margin-top: 10px;
+      text-transform: uppercase;
+    }
+
+    .back-btn {
+      padding: 10px 30px;
+      font-size: 18px;
+      background: rgba(255, 70, 85, 0.1);
+      border: 2px solid #ff4655;
+      color: #ff4655;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 70, 85, 0.2);
+      box-shadow: 0 0 15px rgba(255, 70, 85, 0.4);
+    }
+
+    /* HUD Container */
+
+    #game-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: none;
+      z-index: 10;
+    }
+
+    /* Top Bar */
+
+    #top-bar {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .score-box {
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 5px 15px;
+      font-size: 24px;
+      font-weight: bold;
+      border-radius: 4px;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .score-box.red {
+      border-bottom: 3px solid #ff4655;
+    }
+
+    .score-box.blue {
+      border-bottom: 3px solid #00e5ff;
+    }
+
+    .timer-box {
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 5px 20px;
+      font-size: 28px;
+      font-weight: bold;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Player Stats (Bottom Left) */
+
+    #player-stats {
+      position: absolute;
+      bottom: 30px;
+      left: 40px;
+      color: white;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: baseline;
+      margin-bottom: 5px;
+    }
+
+    .stat-icon {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-right: 10px;
+      width: 20px;
+    }
+
+    .stat-value {
+      font-size: 42px;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    /* Ability Bar (Bottom Center) */
+
+    #ability-bar {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+
+    .ability-icon {
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 4px;
+    }
+
+    .ability-icon.active {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: white;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .ability-icon.ultimate {
+      background: rgba(255, 70, 85, 0.2);
+      border-color: #ff4655;
+    }
+
+    /* Ammo Panel (Bottom Right) */
+
+    #ammo-panel {
+      position: absolute;
+      bottom: 30px;
+      right: 40px;
+      text-align: right;
+      color: white;
+    }
+
+    .ammo-primary {
+      font-size: 48px;
+      font-weight: bold;
+    }
+
+    .ammo-reserve {
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Kill Feed */
+
+    #kill-feed {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: flex-end;
+    }
+
+    .kill-feed-item {
+      background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.6));
+      padding: 5px 15px;
+      color: white;
+      font-size: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      transition: opacity 0.5s;
+    }
+
+    .kill-feed-item .killer {
+      color: #00e5ff;
+      font-weight: bold;
+    }
+
+    .kill-feed-item .victim {
+      color: #ff4655;
+      font-weight: bold;
+    }
+
+    .kill-feed-item .headshot {
+      color: #ff4655;
+      font-size: 18px;
+    }
+
+    /* Crosshair */
+
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #00e5ff;
+      border-radius: 50%;
+      box-shadow: 0 0 4px #00e5ff;
+      display: none;
+      z-index: 20;
+    }
+
+    /* Scrollbar Styling */
+
+    .foundry-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .foundry-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .foundry-content::-webkit-scrollbar-thumb {
+      background: rgba(0, 229, 255, 0.5);
+      border-radius: 4px;
+    }
+
+    .foundry-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 229, 255, 0.8);
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-BaLAodRK.js"></script>
+</head>
+
+<body>
+  <canvas id="renderCanvas"></canvas>
+
+  <!-- Main Menu Panel -->
+  <div id="main-menu-panel">
+    <h1>PROTOCOL: ZERO</h1>
+    <div class="menu-buttons">
+      <button class="menu-btn" id="btn-start-game">Start Game</button>
+      <button class="menu-btn" id="btn-foundry">Foundry</button>
+      <button class="menu-btn" id="btn-exit">Exit</button>
+    </div>
+  </div>
+
+  <!-- Foundry Panel -->
+  <div id="foundry-panel">
+    <div class="foundry-header">
+      <h2>FOUNDRY</h2>
+      <button class="back-btn" id="btn-foundry-back">← Back</button>
+    </div>
+    <div class="foundry-content">
+      <div class="weapon-grid" id="weapon-grid">
+        <!-- Weapons will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Game HUD -->
+  <div id="game-hud">
+    <!-- Top Bar: Timer & Score -->
+    <div id="top-bar">
+      <div class="score-box red">0</div>
+      <div class="timer-box">1:45</div>
+      <div class="score-box blue">0</div>
+    </div>
+
+    <!-- Kill Feed -->
+    <div id="kill-feed"></div>
+
+    <!-- Bottom Left: Health & Armor -->
+    <div id="player-stats">
+      <div class="stat-row">
+        <div class="stat-icon">HP</div>
+        <div class="stat-value" id="health-value">100</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-icon">AP</div>
+        <div class="stat-value" id="armor-value">50</div>
+      </div>
+    </div>
+
+    <!-- Bottom Center: Abilities -->
+    <div id="ability-bar">
+      <div class="ability-icon" id="ability-1">C</div>
+      <div class="ability-icon" id="ability-2">Q</div>
+      <div class="ability-icon active" id="ability-3">E</div>
+      <div class="ability-icon ultimate" id="ability-4">X</div>
+    </div>
+
+    <!-- Bottom Right: Ammo -->
+    <div id="ammo-panel">
+      <div class="ammo-primary" id="ammo-value">25</div>
+      <div class="ammo-reserve" id="magazine-value">75</div>
+    </div>
+  </div>
+
+  <!-- Crosshair -->
+  <div id="crosshair"></div>
+
+</body>
+
+</html>

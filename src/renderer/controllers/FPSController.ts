@@ -1,4 +1,5 @@
 import { Scene, UniversalCamera, Vector3, ActionManager, KeyboardEventTypes, Axis, Ray, Color3, MeshBuilder, StandardMaterial, Mesh } from '@babylonjs/core'
+import { IDamageable } from '../src/interfaces/IDamageable'
 
 export class FPSController {
     private scene: Scene
@@ -13,6 +14,7 @@ export class FPSController {
 
     // Weapon attachment
     public weaponAttachPoint: Mesh | null = null
+    private currentWeapon: Mesh | null = null
 
     constructor(scene: Scene, startPosition: Vector3) {
         this.scene = scene
@@ -106,6 +108,16 @@ export class FPSController {
         weaponMesh.position = Vector3.Zero()
         weaponMesh.rotation = Vector3.Zero()
         weaponMesh.scaling = new Vector3(0.2, 0.2, 0.2) // Scale down for FP view
+
+        // Store weapon reference
+        this.currentWeapon = weaponMesh
+    }
+
+    /**
+     * Set current weapon reference (for modular weapons)
+     */
+    public setWeapon(weaponMesh: Mesh): void {
+        this.currentWeapon = weaponMesh
     }
 
     private moveVelocity: Vector3 = Vector3.Zero()
@@ -215,23 +227,40 @@ export class FPSController {
         this.currentAmmo--
         this.updateHUD()
 
-        // Raycast from center of screen
+        // Hitscan: Raycast from camera (FPS standard for accuracy)
         const origin = this.camera.position
         const direction = this.camera.getForwardRay().direction
 
         const ray = new Ray(origin, direction, 100)
         const hit = this.scene.pickWithRay(ray)
 
-        // Visual: Bullet Trail
-        const right = this.camera.getDirection(Axis.X).scale(0.2)
-        const down = this.camera.getDirection(Axis.Y).scale(-0.2)
-        const forward = this.camera.getDirection(Axis.Z).scale(0.5)
-        const gunMuzzlePos = origin.add(right).add(down).add(forward)
+        // Get muzzle flash point from weapon (if available)
+        let muzzleFlashPos: Vector3
+        if (this.currentWeapon) {
+            // Try to find muzzle_flash_point in weapon hierarchy
+            const muzzlePoint = this.findMuzzleFlashPoint(this.currentWeapon)
+            if (muzzlePoint) {
+                muzzleFlashPos = muzzlePoint.getAbsolutePosition()
+            } else {
+                // Fallback: estimate from weapon position
+                const right = this.camera.getDirection(Axis.X).scale(0.2)
+                const down = this.camera.getDirection(Axis.Y).scale(-0.2)
+                const forward = this.camera.getDirection(Axis.Z).scale(0.5)
+                muzzleFlashPos = origin.add(right).add(down).add(forward)
+            }
+        } else {
+            // Fallback: estimate from camera
+            const right = this.camera.getDirection(Axis.X).scale(0.2)
+            const down = this.camera.getDirection(Axis.Y).scale(-0.2)
+            const forward = this.camera.getDirection(Axis.Z).scale(0.5)
+            muzzleFlashPos = origin.add(right).add(down).add(forward)
+        }
 
         const endPoint = hit?.pickedPoint || origin.add(direction.scale(100))
 
+        // Visual Tracer: From muzzle to hit point
         const trail = MeshBuilder.CreateLines('trail', {
-            points: [gunMuzzlePos, endPoint],
+            points: [muzzleFlashPos, endPoint],
             updatable: false
         }, this.scene)
         trail.color = new Color3(1, 1, 0) // Yellow trail
@@ -253,22 +282,35 @@ export class FPSController {
                 marker.dispose()
             }, 200)
 
-            // Target Destruction Logic
-            if (hit.pickedMesh.metadata && hit.pickedMesh.metadata.isTarget) {
-                console.log('Target Hit!', hit.pickedMesh.name)
+            // Damage System Logic
+            if (hit.pickedMesh.metadata) {
+                // Check if it's an enemy or damageable object
+                if (hit.pickedMesh.metadata.parentClass && 'takeDamage' in hit.pickedMesh.metadata.parentClass) {
+                    const damageable = hit.pickedMesh.metadata.parentClass as IDamageable
+                    const damage = 25 // Base damage for Vandal
+                    const isHeadshot = hit.pickedMesh.metadata.isHeadshot || false
 
-                // Show kill feed
-                if (this.hudController) {
-                    this.hudController.showKillFeed('Player', 'Training_Bot', 'Vandal', hit.pickedMesh.metadata.isHeadshot)
+                    const finalDamage = isHeadshot ? damage * 4 : damage
+                    damageable.takeDamage(finalDamage)
+
+                    // Show kill feed if dead
+                    if (damageable.isDead() && this.hudController) {
+                        this.hudController.showKillFeed('Player', 'Enemy', 'Vandal', isHeadshot)
+                    }
                 }
 
-                // Destroy target
-                hit.pickedMesh.dispose()
+                // Target Destruction Logic (Legacy Target)
+                if (hit.pickedMesh.metadata.isTarget) {
+                    console.log('Target Hit!', hit.pickedMesh.name)
 
-                // If it has a parent (like the target center), dispose that too or handle it
-                // In MapGenerator, center is separate mesh but logically part of target. 
-                // Actually MapGenerator creates outer and center separately. 
-                // Ideally we should group them, but for now let's just dispose what we hit.
+                    // Show kill feed
+                    if (this.hudController) {
+                        this.hudController.showKillFeed('Player', 'Training_Bot', 'Vandal', hit.pickedMesh.metadata.isHeadshot)
+                    }
+
+                    // Destroy target
+                    hit.pickedMesh.dispose()
+                }
             }
         }
     }

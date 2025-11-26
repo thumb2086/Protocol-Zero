@@ -1,8 +1,15 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+    weapon: {
+        select: (weaponId: string) => ipcRenderer.invoke('weapon:select', weaponId),
+        onLoaded: (callback: (weaponId: string) => void) => {
+            ipcRenderer.on('weapon:loaded', (_event, weaponId) => callback(weaponId))
+        }
+    }
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

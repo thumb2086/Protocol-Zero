@@ -78,7 +78,14 @@ const electronAPI = {
     }
   }
 };
-const api = {};
+const api = {
+  weapon: {
+    select: (weaponId) => electron.ipcRenderer.invoke("weapon:select", weaponId),
+    onLoaded: (callback) => {
+      electron.ipcRenderer.on("weapon:loaded", (_event, weaponId) => callback(weaponId));
+    }
+  }
+};
 if (process.contextIsolated) {
   try {
     electron.contextBridge.exposeInMainWorld("electron", electronAPI);

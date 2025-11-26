@@ -1,14 +1,3 @@
-{
-    "name": "Vandal",
-    "type": "rifle",
-    "description": "這把槍短小輕便又有準度，小範圍連發也離所防拔。",
-    "components": {
-        "receiver": {
-            "width": 4.5,
-            "height": 6.5,
-            "length": 35,
-            "fillet": 0.2
-        },
         "barrel": {
             "diameter": 1.6,
             "length": 50,

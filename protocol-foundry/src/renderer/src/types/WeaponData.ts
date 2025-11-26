@@ -55,6 +55,7 @@ export interface WeaponBlueprint {
 
     // Global settings
     scale?: number; // Overall scale factor
+    skin?: string; // Procedural skin pattern (e.g., "slash", "zebra")
 }
 
 export interface MaterialSpec {

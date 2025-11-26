@@ -4,10 +4,13 @@ import {
     Scene as BabylonScene,
     Vector3,
     HemisphericLight,
+    DirectionalLight,
+    ShadowGenerator,
     ArcRotateCamera,
     Color4,
     Color3,
-    Mesh
+    Mesh,
+    DefaultRenderingPipeline
 } from '@babylonjs/core'
 import { useWeaponStore } from '../store'
 
@@ -36,13 +39,33 @@ const Scene: React.FC = () => {
         camera.wheelPrecision = 50
         camera.minZ = 0.1
 
-        const light = new HemisphericLight('light1', new Vector3(0, 1, 0), scene)
-        light.intensity = 0.8
-        light.groundColor = new Color3(0.2, 0.2, 0.2)
+        // Ambient Light (Sky)
+        const ambientLight = new HemisphericLight('ambientLight', Vector3.Up(), scene)
+        ambientLight.intensity = 0.5
+        ambientLight.groundColor = new Color3(0.1, 0.1, 0.1)
 
-        const dirLight = new HemisphericLight('light2', new Vector3(1, 0.5, -1), scene)
-        dirLight.intensity = 0.5
-        dirLight.specular = new Color3(1, 1, 1)
+        // Sun Light (Directional)
+        const sunLight = new DirectionalLight('sunLight', new Vector3(-1, -2, -1), scene)
+        sunLight.intensity = 2.0
+        sunLight.position = new Vector3(20, 40, 20)
+
+        // Shadows
+        const shadowGenerator = new ShadowGenerator(1024, sunLight)
+        shadowGenerator.useBlurExponentialShadowMap = true
+        shadowGenerator.blurKernel = 32
+        shadowGenerator.setDarkness(0.3)
+
+        // Post-Processing (DISABLED for debugging)
+        const pipeline = new DefaultRenderingPipeline(
+            "defaultPipeline",
+            true, // hdr
+            scene,
+            [camera]
+        );
+        pipeline.glowLayerEnabled = false; // DISABLED: See raw lighting without filters
+
+        // Store shadow generator in scene metadata for easy access
+        scene.metadata = { shadowGenerator }
 
         engine.runRenderLoop(() => {
             scene.render()
@@ -113,6 +136,16 @@ const Scene: React.FC = () => {
                     const weapon = assembler.assembleFromBlueprint(blueprint)
 
                     console.log(`[Scene] ✓ Assembled with ${sceneRef.current!.meshes.length - 2} weapon meshes`)
+
+                    // Add to shadow generator
+                    const shadowGenerator = sceneRef.current!.metadata?.shadowGenerator as ShadowGenerator
+                    if (shadowGenerator) {
+                        weapon.getChildMeshes().forEach((mesh) => {
+                            shadowGenerator.addShadowCaster(mesh)
+                            mesh.receiveShadows = true
+                        })
+                    }
+
                     return weapon
 
                 } catch (error) {

@@ -3,9 +3,10 @@
  * Handles mount point positioning and mesh merging
  */
 
-import { Mesh, Scene, Vector3, StandardMaterial, Color3 } from '@babylonjs/core';
+import { Mesh, Scene, Vector3, StandardMaterial, PBRMaterial, Color3 } from '@babylonjs/core';
 import { ComponentFactory } from './factory/ComponentFactory';
 import { ProfileLib } from './factory/ProfileLib';
+import { SkinSystem } from './SkinSystem';
 import type { WeaponBlueprint, WeaponBuild, PartData, ComponentSpec } from '../types/WeaponData';
 
 export class WeaponAssembler {
@@ -18,115 +19,111 @@ export class WeaponAssembler {
     }
 
     /**
-     * Assemble a weapon from a blueprint
+     * Assemble a weapon from a blueprint using mount point system
      */
     assembleFromBlueprint(blueprint: WeaponBlueprint): Mesh {
         console.log(`[WeaponAssembler] Assembling weapon from blueprint: ${blueprint.name}`);
 
         const root = new Mesh(`${blueprint.name}_Root`, this.scene);
-        const parts: Mesh[] = [];
+        const weaponId = blueprint.name.toLowerCase();
 
         // Create materials
         const materials = this.createDefaultMaterials();
 
-        // Build receiver (main body)
+        // Apply skin if specified
+        if (blueprint.skin) {
+            console.log(`[WeaponAssembler] Applying skin: ${blueprint.skin}`);
+            const skinTexture = SkinSystem.generateSkin(blueprint.skin, this.scene);
+
+            if (skinTexture) {
+                // Apply to all materials
+                Object.values(materials).forEach(mat => {
+                    mat.albedoTexture = skinTexture;
+                });
+            }
+        }
+
+        // ============================================================
+        // STEP 1: Create Receiver (contains mount points)
+        // ============================================================
+        let receiver: Mesh | null = null;
         if (blueprint.components.receiver) {
-            const receiver = this.buildComponent(
-                'Receiver',
-                'receiver',
+            receiver = this.factory.createReceiver(
+                weaponId,
                 blueprint.components.receiver,
                 materials.receiver
             );
             receiver.parent = root;
-            parts.push(receiver);
+            console.log(`[WeaponAssembler] Created receiver with mount points`);
         }
 
-        // Build barrel
-        if (blueprint.components.barrel && blueprint.mountPoints.barrelMount) {
-            const barrel = this.buildComponent(
-                'Barrel',
-                'barrel',
-                blueprint.components.barrel,
-                materials.barrel
-            );
-            const mountPos = Vector3.FromArray(blueprint.mountPoints.barrelMount);
-            this.attachPart(barrel, root, mountPos);
-            parts.push(barrel);
+        if (!receiver) {
+            console.error('[WeaponAssembler] Cannot assemble weapon without receiver');
+            return root;
         }
 
-        // Build stock (if exists)
-        if (blueprint.components.stock && blueprint.mountPoints.stockMount) {
-            const stock = this.buildComponent(
-                'Stock',
-                'stock',
-                blueprint.components.stock,
-                materials.stock
-            );
-            const mountPos = Vector3.FromArray(blueprint.mountPoints.stockMount);
-            this.attachPart(stock, root, mountPos);
-            parts.push(stock);
-        }
+        // ============================================================
+        // STEP 2: Attach components to mount points
+        // ============================================================
 
-        // Build magazine
-        if (blueprint.components.magazine && blueprint.mountPoints.magazineMount) {
-            const magazine = this.buildComponent(
-                'Magazine',
-                'magazine',
-                blueprint.components.magazine,
-                materials.magazine
-            );
-            const mountPos = Vector3.FromArray(blueprint.mountPoints.magazineMount);
-
-            // Apply curve if specified
-            if (blueprint.components.magazine.curve) {
-                const curvedPath = ProfileLib.getCurvedMagPath(
-                    blueprint.components.magazine.length || 10,
-                    blueprint.components.magazine.curve,
-                    8
+        // Attach Barrel to mount_barrel
+        if (blueprint.components.barrel) {
+            const barrelMount = this.factory.getMountPoint(receiver, 'mount_barrel');
+            if (barrelMount) {
+                const barrel = this.factory.createBarrel(
+                    weaponId,
+                    blueprint.components.barrel,
+                    materials.barrel
                 );
-                // Recreate magazine with curved path
-                const magShape = ProfileLib.getRectangleProfile(
-                    blueprint.components.magazine.width || 2,
-                    blueprint.components.magazine.height || 4,
-                    0.2
-                );
-                magazine.dispose();
-                const curvedMag = this.factory.extrudePath('Magazine', magShape, curvedPath, materials.magazine);
-                curvedMag.rotation.x = Math.PI;
-                this.attachPart(curvedMag, root, mountPos);
-                parts.push(curvedMag);
-            } else {
-                this.attachPart(magazine, root, mountPos);
-                parts.push(magazine);
+                barrel.parent = barrelMount;
+                barrel.position = Vector3.Zero(); // Position relative to mount point
+                console.log(`[WeaponAssembler] Attached barrel to mount_barrel`);
             }
         }
 
-        // Build grip (if exists)
-        if (blueprint.components.grip && blueprint.mountPoints.gripMount) {
-            const grip = this.buildComponent(
-                'Grip',
-                'grip',
-                blueprint.components.grip,
-                materials.grip
-            );
-            const mountPos = Vector3.FromArray(blueprint.mountPoints.gripMount);
-            // Rotate grip to face downward
-            grip.rotation.y = Math.PI / 2;
-            this.attachPart(grip, root, mountPos);
-            parts.push(grip);
+        // Attach Stock to mount_stock (if exists)
+        if (blueprint.components.stock) {
+            const stockMount = this.factory.getMountPoint(receiver, 'mount_stock');
+            if (stockMount) {
+                const stock = this.factory.createStock(
+                    weaponId,
+                    blueprint.components.stock,
+                    materials.stock
+                );
+                stock.parent = stockMount;
+                stock.position = Vector3.Zero();
+                console.log(`[WeaponAssembler] Attached stock to mount_stock`);
+            }
         }
 
-        // Build suppressor (if exists)
-        if (blueprint.components.suppressor && blueprint.mountPoints.suppressorMount) {
-            const suppressor = this.buildComponent(
-                'Suppressor',
-                'suppressor',
-                blueprint.components.suppressor,
-                materials.barrel
-            );
-            const mountPos = Vector3.FromArray(blueprint.mountPoints.suppressorMount);
-            this.attachPart(suppressor, root, mountPos);
-            parts.push(suppressor);
+        // Attach Magazine to mount_magazine
+        if (blueprint.components.magazine) {
+            const magazineMount = this.factory.getMountPoint(receiver, 'mount_magazine');
+            if (magazineMount) {
+                const magazine = this.factory.createMagazine(
+                    weaponId,
+                    blueprint.components.magazine,
+                    materials.magazine
+                );
+                magazine.parent = magazineMount;
+                magazine.position = Vector3.Zero();
+                console.log(`[WeaponAssembler] Attached magazine to mount_magazine`);
+            }
+        }
+
+        // Attach Grip to mount_grip (if exists)
+        if (blueprint.components.grip) {
+            const gripMount = this.factory.getMountPoint(receiver, 'mount_grip');
+            if (gripMount) {
+                const grip = this.factory.createGrip(
+                    weaponId,
+                    blueprint.components.grip,
+                    materials.grip
+                );
+                grip.parent = gripMount;
+                grip.position = Vector3.Zero();
+                console.log(`[WeaponAssembler] Attached grip to mount_grip`);
+            }
         }
 
         // Apply global scale
@@ -134,101 +131,146 @@ export class WeaponAssembler {
             root.scaling = new Vector3(blueprint.scale, blueprint.scale, blueprint.scale);
         }
 
-        console.log(`[WeaponAssembler] Assembled ${parts.length} parts for ${blueprint.name}`);
+        console.log(`[WeaponAssembler] Assembly complete for ${blueprint.name}`);
         return root;
     }
 
+
     /**
-     * Build a component from its specification
+     * Swap a component on an assembled weapon
+     * Allows hot-swapping parts without rebuilding the entire weapon
      */
-    private buildComponent(
-        name: string,
-        type: string,
-        spec: ComponentSpec,
-        material: StandardMaterial
-    ): Mesh {
-        // MVP: Blocky Style for Barrel/Suppressor
-        if (type === 'barrel' || type === 'suppressor') {
-            const mesh = this.factory.createCylinder(name, {
-                height: spec.length || 40,
-                diameter: spec.diameter || 1.5
-            }, material);
-            // createCylinder already rotates it to Z axis
-            return mesh;
+    swapComponent(
+        weaponRoot: Mesh,
+        componentType: 'barrel' | 'scope' | 'stock' | 'magazine' | 'grip',
+        weaponId: string,
+        newSpec: ComponentSpec,
+        material: PBRMaterial
+    ): void {
+        console.log(`[WeaponAssembler] Swapping ${componentType} on weapon`);
+
+        // Find receiver (should be first child of root)
+        const receiver = weaponRoot.getChildren().find(child =>
+            child instanceof Mesh && child.name.includes('receiver')
+        ) as Mesh;
+
+        if (!receiver) {
+            console.error('[WeaponAssembler] Cannot swap component: receiver not found');
+            return;
         }
 
-        // For grip components, keep using profile extrusion for ergonomics
-        if (type === 'grip') {
-            const profile = this.getGripProfile(spec);
-            const mesh = this.factory.extrudePart(name, profile, spec.depth || 2.5, material);
-            return mesh;
+        // Get the appropriate mount point
+        const mountName = `mount_${componentType}`;
+        const mountPoint = this.factory.getMountPoint(receiver, mountName);
+
+        if (!mountPoint) {
+            console.error(`[WeaponAssembler] Cannot swap component: ${mountName} not found`);
+            return;
         }
 
-        // MVP: Blocky Style for Receiver, Magazine, Stock
-        // Use simple Box instead of profile extrusion
-        const mesh = this.factory.createBox(name, {
-            width: spec.width || 4,
-            height: spec.height || 6,
-            depth: spec.length || 10
-        }, material);
+        // Remove old component
+        const oldComponent = mountPoint.getChildren().find(child => child instanceof Mesh) as Mesh;
+        if (oldComponent) {
+            console.log(`[WeaponAssembler] Disposing old ${componentType}`);
+            oldComponent.dispose();
+        }
 
-        return mesh;
+        // Create and attach new component
+        let newComponent: Mesh;
+        switch (componentType) {
+            case 'barrel':
+                newComponent = this.factory.createBarrel(weaponId, newSpec, material);
+                break;
+            case 'scope':
+                newComponent = this.factory.createScope(weaponId, newSpec, material);
+                break;
+            case 'stock':
+                newComponent = this.factory.createStock(weaponId, newSpec, material);
+                break;
+            case 'magazine':
+                newComponent = this.factory.createMagazine(weaponId, newSpec, material);
+                break;
+            case 'grip':
+                newComponent = this.factory.createGrip(weaponId, newSpec, material);
+                break;
+            default:
+                console.error(`[WeaponAssembler] Unknown component type: ${componentType}`);
+                return;
+        }
+
+        newComponent.parent = mountPoint;
+        newComponent.position = Vector3.Zero();
+        console.log(`[WeaponAssembler] Successfully swapped ${componentType}`);
     }
 
     /**
-     * Get barrel profile from spec
+     * Remove a component from an assembled weapon
      */
-    private getBarrelProfile(spec: ComponentSpec): Vector3[] {
-        const diameter = spec.diameter || 1.5;
-        const length = spec.length || 40;
+    removeComponent(weaponRoot: Mesh, componentType: string): void {
+        console.log(`[WeaponAssembler] Removing ${componentType} from weapon`);
 
-        // Simple barrel profile
-        return [
-            new Vector3(0, 0, 0),
-            new Vector3(diameter * 0.5, 0, 0),
-            new Vector3(diameter * 0.5, length * 0.9, 0),
-            new Vector3(diameter * 0.4, length * 0.95, 0),
-            new Vector3(diameter * 0.4, length, 0),
-            new Vector3(0, length, 0)
-        ];
-    }
+        // Find receiver
+        const receiver = weaponRoot.getChildren().find(child =>
+            child instanceof Mesh && child.name.includes('receiver')
+        ) as Mesh;
 
-    /**
-     * Get grip profile from spec
-     */
-    private getGripProfile(spec: ComponentSpec): Vector3[] {
-        // Use predefined profile or create default
-        if (spec.profile === 'ak_grip') {
-            return ProfileLib.getAKGripProfile();
-        } else if (spec.profile === 'pistol_grip') {
-            return ProfileLib.getPistolGripProfile();
-        } else if (spec.profile === 'tactical_grip') {
-            return ProfileLib.getTacticalGripProfile();
+        if (!receiver) {
+            console.error('[WeaponAssembler] Cannot remove component: receiver not found');
+            return;
         }
 
-        // Default grip profile
-        return ProfileLib.getAKGripProfile();
+        // Get mount point
+        const mountName = `mount_${componentType}`;
+        const mountPoint = this.factory.getMountPoint(receiver, mountName);
+
+        if (!mountPoint) {
+            console.error(`[WeaponAssembler] Cannot remove component: ${mountName} not found`);
+            return;
+        }
+
+        // Dispose component
+        const component = mountPoint.getChildren().find(child => child instanceof Mesh) as Mesh;
+        if (component) {
+            component.dispose();
+            console.log(`[WeaponAssembler] Successfully removed ${componentType}`);
+        } else {
+            console.warn(`[WeaponAssembler] No component found at ${mountName}`);
+        }
     }
 
     /**
      * Create default materials for weapon parts
      */
-    private createDefaultMaterials(): Record<string, StandardMaterial> {
-        const matReceiver = new StandardMaterial('mat_receiver', this.scene);
-        matReceiver.diffuseColor = new Color3(0.15, 0.15, 0.18);
+    private createDefaultMaterials(): Record<string, PBRMaterial> {
+        const matReceiver = new PBRMaterial('mat_receiver', this.scene);
+        matReceiver.albedoColor = new Color3(0.15, 0.15, 0.18);
+        matReceiver.roughness = 0.8; // Debug
+        matReceiver.metallic = 0;    // Debug
+        matReceiver.emissiveColor = Color3.Black();
 
-        const matBarrel = new StandardMaterial('mat_barrel', this.scene);
-        matBarrel.diffuseColor = new Color3(0.1, 0.1, 0.1);
-        matBarrel.specularColor = new Color3(0.3, 0.3, 0.3);
+        const matBarrel = new PBRMaterial('mat_barrel', this.scene);
+        matBarrel.albedoColor = new Color3(0.1, 0.1, 0.1);
+        matBarrel.roughness = 0.8; // Debug
+        matBarrel.metallic = 0;    // Debug
+        matBarrel.emissiveColor = Color3.Black();
 
-        const matStock = new StandardMaterial('mat_stock', this.scene);
-        matStock.diffuseColor = new Color3(0.18, 0.16, 0.14);
+        const matStock = new PBRMaterial('mat_stock', this.scene);
+        matStock.albedoColor = new Color3(0.18, 0.16, 0.14);
+        matStock.roughness = 0.8; // Debug
+        matStock.metallic = 0;    // Debug
+        matStock.emissiveColor = Color3.Black();
 
-        const matMag = new StandardMaterial('mat_mag', this.scene);
-        matMag.diffuseColor = new Color3(0.2, 0.2, 0.2);
+        const matMag = new PBRMaterial('mat_mag', this.scene);
+        matMag.albedoColor = new Color3(0.2, 0.2, 0.2);
+        matMag.roughness = 0.8; // Debug
+        matMag.metallic = 0;    // Debug
+        matMag.emissiveColor = Color3.Black();
 
-        const matGrip = new StandardMaterial('mat_grip', this.scene);
-        matGrip.diffuseColor = new Color3(0.1, 0.1, 0.1);
+        const matGrip = new PBRMaterial('mat_grip', this.scene);
+        matGrip.albedoColor = new Color3(0.1, 0.1, 0.1);
+        matGrip.roughness = 0.8; // Debug
+        matGrip.metallic = 0;    // Debug
+        matGrip.emissiveColor = Color3.Black();
 
         return {
             receiver: matReceiver,
@@ -237,14 +279,6 @@ export class WeaponAssembler {
             magazine: matMag,
             grip: matGrip
         };
-    }
-
-    /**
-     * Attach a part to a parent at a specific mount point
-     */
-    private attachPart(part: Mesh, parent: Mesh, mountPoint: Vector3): void {
-        part.parent = parent;
-        part.position = mountPoint;
     }
 
     /**
@@ -258,14 +292,5 @@ export class WeaponAssembler {
         const root = new Mesh(`${build.name}_Root`, this.scene);
         return root;
     }
-
-    /**
-     * Merge all parts into a single optimized mesh (future optimization)
-     */
-    private mergeParts(parts: Mesh[]): Mesh {
-        // TODO: Use Mesh.MergeMeshes for performance optimization
-        // For now, keep parts separate for easier debugging
-        console.log('[WeaponAssembler] Mesh merging not yet implemented');
-        return parts[0]; // Return first part as placeholder
-    }
 }
+

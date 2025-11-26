@@ -1,4 +1,4 @@
-import { Scene, MeshBuilder, Vector3, StandardMaterial, Color3, Mesh, CSG, TransformNode } from '@babylonjs/core'
+import { Scene, MeshBuilder, Vector3, StandardMaterial, Color3, Mesh, CSG, TransformNode, SceneLoader, AbstractMesh } from '@babylonjs/core'
 
 export class WeaponAssembler {
     private scene: Scene
@@ -224,5 +224,22 @@ export class WeaponAssembler {
         mesh.material = mat
 
         return root
+    }
+    public async loadCommunityWeapon(url: string, position: Vector3): Promise<AbstractMesh | null> {
+        try {
+            const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene)
+            const root = result.meshes[0]
+
+            // Normalize scale/rotation if needed (GLB usually exports with Z-forward, but Babylon might need adjustment)
+            root.position = position
+
+            // Ensure it has a name for easy identification
+            root.name = 'Community_Weapon_Root'
+
+            return root
+        } catch (error) {
+            console.error('Failed to load community weapon:', error)
+            return null
+        }
     }
 }

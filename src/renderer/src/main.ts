@@ -10,6 +10,7 @@ import { WeaponAssembler } from '../generators/WeaponAssembler'
 import { FPSController } from '../controllers/FPSController'
 import { MapGenerator } from '../generators/MapGenerator'
 import { HUDController } from '../controllers/HUDController'
+import { GitHubWeaponLoader } from '../utils/GitHubWeaponLoader'
 
 console.log('Protocol: Zero - Renderer Process Started')
 
@@ -65,6 +66,26 @@ async function initGame() {
             // Weapon Showcase
             const gaia = weaponGen.generateVandal(new Vector3(-5, 1.2, 25), 'gaia')
             gaia.rotation.y = Math.PI / 2
+
+            // Community Weapon Showcase
+            GitHubWeaponLoader.fetchManifest().then(async (manifest) => {
+                if (manifest && manifest.weapons.length > 0) {
+                    console.log(`Found ${manifest.weapons.length} community weapons`)
+                    // Load the most recent one
+                    const weapon = manifest.weapons[manifest.weapons.length - 1]
+                    console.log(`Loading community weapon: ${weapon.name}`)
+
+                    const url = GitHubWeaponLoader.getModelUrl(weapon.model)
+                    const mesh = await weaponGen.loadCommunityWeapon(url, new Vector3(5, 1.2, 25))
+
+                    if (mesh) {
+                        mesh.rotation.y = -Math.PI / 2
+                        console.log('✓ Community weapon loaded')
+                    }
+                } else {
+                    console.log('No community weapons found in repository')
+                }
+            })
 
             // UI Management
             const hud = new HUDController()

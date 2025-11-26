@@ -14,6 +14,54 @@ export class ComponentFactory {
     }
 
     /**
+     * MVP: Simple Box (Blocky Style)
+     * Creates a simple box mesh for receivers, magazines, etc.
+     */
+    createBox(name: string, options: { width: number; height: number; depth: number }, material?: StandardMaterial): Mesh {
+        const mesh = MeshBuilder.CreateBox(name, {
+            width: options.width,
+            height: options.height,
+            depth: options.depth
+        }, this.scene);
+
+        if (material) {
+            mesh.material = material;
+        } else {
+            const defaultMat = new StandardMaterial(name + "_mat", this.scene);
+            defaultMat.diffuseColor = new Color3(0.5, 0.5, 0.5);
+            mesh.material = defaultMat;
+        }
+
+        return mesh;
+    }
+
+    /**
+     * MVP: Simple Cylinder (Blocky Style)
+     * Creates a simple cylinder for barrels, scopes, etc.
+     */
+    createCylinder(name: string, options: { height: number; diameter: number }, material?: StandardMaterial): Mesh {
+        // Babylon's cylinder height is along Y axis, we usually want Z for guns
+        const mesh = MeshBuilder.CreateCylinder(name, {
+            height: options.height,
+            diameter: options.diameter,
+            tessellation: 16 // Low-poly look
+        }, this.scene);
+
+        // Rotate to align with Z axis by default
+        mesh.rotation.x = Math.PI / 2;
+
+        if (material) {
+            mesh.material = material;
+        } else {
+            const defaultMat = new StandardMaterial(name + "_mat", this.scene);
+            defaultMat.diffuseColor = new Color3(0.2, 0.2, 0.2);
+            mesh.material = defaultMat;
+        }
+
+        return mesh;
+    }
+
+    /**
      * Machine A: The Extruder (Linear Parts)
      * Extrudes a 2D profile into a 3D shape along the Z axis.
      */

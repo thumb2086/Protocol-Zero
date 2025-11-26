@@ -1,0 +1,31 @@
+{
+    "name": "barrel",
+    "type": "lathe_profile",
+    "description": "Barrel profile for cylindrical parts (revolves around Y axis)",
+    "points": [
+        [
+            0,
+            0
+        ],
+        [
+            0.75,
+            0
+        ],
+        [
+            0.75,
+            40
+        ],
+        [
+            0.6,
+            42
+        ],
+        [
+            0.6,
+            45
+        ],
+        [
+            0,
+            45
+        ]
+    ]
+}

@@ -9,14 +9,7 @@ import {
     Color3,
     Mesh
 } from '@babylonjs/core'
-import { WeaponArchitect, WeaponBlueprint } from '../core/WeaponArchitect'
 import { useWeaponStore } from '../store'
-
-// Import Blueprints
-// Import Blueprints
-import { classicBlueprint } from '../weapons/classic'
-import { vandalBlueprint } from '../weapons/vandal'
-import { phantomBlueprint } from '../weapons/phantom'
 
 const Scene: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -26,7 +19,7 @@ const Scene: React.FC = () => {
 
     const { weaponType } = useWeaponStore()
 
-    // Initialize Engine and Scene
+    // Initialize Engine and Scene ONCE
     useEffect(() => {
         if (!canvasRef.current) return
 
@@ -36,7 +29,6 @@ const Scene: React.FC = () => {
         engineRef.current = engine
         sceneRef.current = scene
 
-        // Lighter background for better contrast
         scene.clearColor = new Color4(0.12, 0.12, 0.15, 1)
 
         const camera = new ArcRotateCamera('camera1', -Math.PI / 2, Math.PI / 2.5, 10, Vector3.Zero(), scene)
@@ -44,12 +36,10 @@ const Scene: React.FC = () => {
         camera.wheelPrecision = 50
         camera.minZ = 0.1
 
-        // Main ambient light
         const light = new HemisphericLight('light1', new Vector3(0, 1, 0), scene)
         light.intensity = 0.8
         light.groundColor = new Color3(0.2, 0.2, 0.2)
 
-        // Directional light
         const dirLight = new HemisphericLight('light2', new Vector3(1, 0.5, -1), scene)
         dirLight.intensity = 0.5
         dirLight.specular = new Color3(1, 1, 1)
@@ -70,38 +60,100 @@ const Scene: React.FC = () => {
         }
     }, [])
 
-    // Rebuild Weapon when type changes
+    // Load weapon when type changes - BLUEPRINT SYSTEM ONLY
     useEffect(() => {
         if (!sceneRef.current) return
 
-        // Import WeaponBuilder
-        import('../core/WeaponBuilder').then(({ WeaponBuilder }) => {
-            // Dispose old weapon completely
-            WeaponBuilder.disposeWeapon(currentWeaponRef.current);
-            currentWeaponRef.current = null;
+        let isCancelled = false
+        console.log(`\n===== WEAPON CHANGE: ${weaponType} =====`)
 
-            // Create new weapon
-            const builder = new WeaponBuilder(sceneRef.current!);
-            let weapon: Mesh | null = null;
+        // Dynamic import blueprint system ONLY
+        Promise.all([
+            import('../core/WeaponAssembler'),
+            import('../core/PartManager')
+        ]).then(([{ WeaponAssembler }, { partManager }]) => {
+            if (isCancelled) return
 
-            if (weaponType === 'classic') {
-                weapon = builder.createClassic();
-            } else if (weaponType === 'vandal') {
-                weapon = builder.createVandal();
-            } else if (weaponType === 'phantom') {
-                weapon = builder.createPhantom();
+            // === STEP 1: COMPLETE CLEANUP ===
+            if (currentWeaponRef.current) {
+                console.log('[Scene] 🗑️ Disposing old weapon...')
+                const meshCountBefore = sceneRef.current!.meshes.length
+
+                // Recursive disposal function
+                const dispose = (node: any) => {
+                    if (node.getChildren) {
+                        node.getChildren().forEach((child: any) => dispose(child))
+                    }
+                    if (node.dispose && node !== sceneRef.current) {
+                        node.dispose(false, true) // dispose geometry + materials
+                    }
+                }
+
+                dispose(currentWeaponRef.current)
+                currentWeaponRef.current = null
+
+                const meshCountAfter = sceneRef.current!.meshes.length
+                console.log(`[Scene] ✓ Removed ${meshCountBefore - meshCountAfter} meshes`)
             }
 
-            currentWeaponRef.current = weapon;
-        });
+            // === STEP 2: LOAD BLUEPRINT AND ASSEMBLE ===
+            const loadWeapon = async () => {
+                try {
+                    console.log(`[Scene] 📘 Loading ${weaponType} blueprint...`)
+                    const blueprint = await partManager.loadBlueprint(weaponType)
+
+                    if (!blueprint) {
+                        console.error(`[Scene] ❌ Blueprint not found: ${weaponType}`)
+                        return null
+                    }
+
+                    console.log(`[Scene] ✓ Blueprint: ${blueprint.name}`)
+                    const assembler = new WeaponAssembler(sceneRef.current!)
+                    const weapon = assembler.assembleFromBlueprint(blueprint)
+
+                    console.log(`[Scene] ✓ Assembled with ${sceneRef.current!.meshes.length - 2} weapon meshes`)
+                    return weapon
+
+                } catch (error) {
+                    console.error('[Scene] ❌ Error:', error)
+                    return null
+                }
+            }
+
+            loadWeapon().then((weapon) => {
+                if (isCancelled) {
+                    console.log('[Scene] 🛑 Cancelled - disposing loaded weapon')
+                    weapon?.dispose()
+                    return
+                }
+
+                if (weapon) {
+                    currentWeaponRef.current = weapon
+                    console.log('[Scene] ✅ Weapon ready!')
+                } else {
+                    console.error('[Scene] ❌ Failed to create weapon')
+                }
+                console.log('===== WEAPON CHANGE COMPLETE =====\n')
+            })
+        })
 
         // Cleanup on unmount
         return () => {
-            import('../core/WeaponBuilder').then(({ WeaponBuilder }) => {
-                WeaponBuilder.disposeWeapon(currentWeaponRef.current);
-                currentWeaponRef.current = null;
-            });
-        };
+            isCancelled = true
+            if (currentWeaponRef.current) {
+                console.log('[Scene] Unmounting - cleaning up')
+                const dispose = (node: any) => {
+                    if (node.getChildren) {
+                        node.getChildren().forEach((child: any) => dispose(child))
+                    }
+                    if (node.dispose && node !== sceneRef.current) {
+                        node.dispose(false, true)
+                    }
+                }
+                dispose(currentWeaponRef.current)
+                currentWeaponRef.current = null
+            }
+        }
 
     }, [weaponType])
 

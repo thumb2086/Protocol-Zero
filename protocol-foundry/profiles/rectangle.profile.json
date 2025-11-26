@@ -1,0 +1,28 @@
+{
+    "name": "rectangle",
+    "type": "2d_profile",
+    "description": "Rectangular cross-section with optional fillet",
+    "parameters": {
+        "width": 4,
+        "height": 6,
+        "fillet": 0.3
+    },
+    "points": [
+        [
+            -2,
+            -3
+        ],
+        [
+            2,
+            -3
+        ],
+        [
+            2,
+            3
+        ],
+        [
+            -2,
+            3
+        ]
+    ]
+}

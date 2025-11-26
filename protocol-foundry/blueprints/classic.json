@@ -1,0 +1,47 @@
+{
+    "name": "Classic",
+    "type": "pistol",
+    "description": "輕巧且多用途的制式半自動手槍是所有玩家家的頂級武器",
+    "components": {
+        "receiver": {
+            "width": 2.5,
+            "height": 4,
+            "length": 8,
+            "fillet": 0.15
+        },
+        "barrel": {
+            "diameter": 0.9,
+            "length": 6,
+            "profile": "barrel"
+        },
+        "magazine": {
+            "width": 1.2,
+            "height": 2.5,
+            "length": 5,
+            "capacity": 12,
+            "curve": 0
+        },
+        "grip": {
+            "profile": "pistol_grip",
+            "depth": 1.5
+        }
+    },
+    "mountPoints": {
+        "barrelMount": [
+            0,
+            1.2,
+            8
+        ],
+        "magazineMount": [
+            0,
+            -2,
+            2
+        ],
+        "gripMount": [
+            0,
+            -2,
+            0
+        ]
+    },
+    "scale": 0.035
+}

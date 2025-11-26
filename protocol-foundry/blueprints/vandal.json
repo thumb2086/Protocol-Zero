@@ -1,0 +1,57 @@
+{
+    "name": "Vandal",
+    "type": "rifle",
+    "description": "這把槍短小輕便又有準度，小範圍連發也離所防拔。",
+    "components": {
+        "receiver": {
+            "width": 4.5,
+            "height": 6.5,
+            "length": 35,
+            "fillet": 0.2
+        },
+        "barrel": {
+            "diameter": 1.6,
+            "length": 50,
+            "profile": "barrel"
+        },
+        "stock": {
+            "width": 3.5,
+            "height": 5.5,
+            "length": 18
+        },
+        "magazine": {
+            "width": 2.5,
+            "height": 5,
+            "length": 16,
+            "capacity": 25,
+            "curve": 0.85
+        },
+        "grip": {
+            "profile": "ak_grip",
+            "depth": 2.8
+        }
+    },
+    "mountPoints": {
+        "barrelMount": [
+            0,
+            2.5,
+            35
+        ],
+        "stockMount": [
+            0,
+            0,
+            -18
+        ],
+        "magazineMount": [
+            0,
+            -3.5,
+            12
+        ],
+        "gripMount": [
+            0,
+            -3.5,
+            0
+        ]
+    },
+    "scale": 0.018
+}

@@ -78,12 +78,21 @@ const electronAPI = {
     }
   }
 };
+const foundryAPI = {
+  readFile: (path) => electron.ipcRenderer.invoke("foundry:readFile", path),
+  writeFile: (path, data) => electron.ipcRenderer.invoke("foundry:writeFile", path, data),
+  listFiles: (dir) => electron.ipcRenderer.invoke("foundry:listFiles", dir),
+  ensureDir: (dir) => electron.ipcRenderer.invoke("foundry:ensureDir", dir),
+  getPath: (type, ...parts) => electron.ipcRenderer.invoke("foundry:getPath", type, ...parts)
+};
 if (process.contextIsolated) {
   try {
     electron.contextBridge.exposeInMainWorld("electron", electronAPI);
+    electron.contextBridge.exposeInMainWorld("foundry", foundryAPI);
   } catch (error) {
     console.error(error);
   }
 } else {
   window.electron = electronAPI;
+  window.foundry = foundryAPI;
 }

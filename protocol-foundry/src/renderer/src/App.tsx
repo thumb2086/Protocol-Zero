@@ -96,9 +96,9 @@ function App() {
                 <div className="h-8 border-t border-gray-700 bg-gray-800 flex items-center justify-between px-4 text-[10px] text-gray-500">
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                        <span>SYSTEM ONLINE</span>
+                        <span>{t.systemOnline}</span>
                     </div>
-                    <span>UNKNOWN USER</span>
+                    <span>{t.unknownUser}</span>
                 </div>
             </div>
         </div>

@@ -59,6 +59,17 @@ export interface Translations {
     downloadProtocol: string
     export3DModel: string
 
+    // Weapon Names
+    weaponNames: {
+        classic: string
+        vandal: string
+        phantom: string
+    }
+
+    // Footer
+    systemOnline: string
+    unknownUser: string
+
     // Common
     enabled: string
     disabled: string
@@ -117,7 +128,16 @@ export const translations: Record<Language, Translations> = {
         downloadProtocol: '下載協定 (.JSON)',
         export3DModel: '導出 3D 模型 (.GLB)',
 
-        enabled: '啟用',
+        weaponNames: {
+            classic: '制式手槍',
+            vandal: '暴徒',
+            phantom: '幻象'
+        },
+
+        systemOnline: '系統在線',
+        unknownUser: '未知用戶',
+
+        enabled: '已安裝',
         disabled: '停用'
     },
     'en-US': {
@@ -172,7 +192,16 @@ export const translations: Record<Language, Translations> = {
         downloadProtocol: 'Download Protocol (.JSON)',
         export3DModel: 'Export 3D Model (.GLB)',
 
-        enabled: 'Enabled',
+        weaponNames: {
+            classic: 'Classic',
+            vandal: 'Vandal',
+            phantom: 'Phantom'
+        },
+
+        systemOnline: 'SYSTEM ONLINE',
+        unknownUser: 'UNKNOWN USER',
+
+        enabled: 'Installed',
         disabled: 'Disabled'
     }
 }

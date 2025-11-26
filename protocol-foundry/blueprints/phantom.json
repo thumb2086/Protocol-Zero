@@ -1,0 +1,67 @@
+{
+    "name": "Phantom",
+    "type": "rifle",
+    "description": "一把相當平衡的武器，為了穩定性及速度而打造。",
+    "components": {
+        "receiver": {
+            "width": 3.2,
+            "height": 5,
+            "length": 32,
+            "fillet": 0.5
+        },
+        "barrel": {
+            "diameter": 1.2,
+            "length": 38,
+            "profile": "barrel"
+        },
+        "suppressor": {
+            "diameter": 2.2,
+            "length": 22,
+            "profile": "cylinder"
+        },
+        "stock": {
+            "width": 2.8,
+            "height": 4.2,
+            "length": 16
+        },
+        "magazine": {
+            "width": 1.6,
+            "height": 3.2,
+            "length": 12,
+            "capacity": 30,
+            "curve": 0
+        },
+        "grip": {
+            "profile": "tactical_grip",
+            "depth": 2.0
+        }
+    },
+    "mountPoints": {
+        "barrelMount": [
+            0,
+            1.5,
+            32
+        ],
+        "suppressorMount": [
+            0,
+            1.5,
+            70
+        ],
+        "stockMount": [
+            0,
+            -0.5,
+            -16
+        ],
+        "magazineMount": [
+            0,
+            -2.5,
+            10
+        ],
+        "gripMount": [
+            0,
+            -2.5,
+            0
+        ]
+    },
+    "scale": 0.019
+}

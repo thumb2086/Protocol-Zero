@@ -148,4 +148,38 @@ export class ProfileLib {
             new Vector3(0, 0, 0)      // Close
         ];
     }
+
+    /**
+     * Returns a pistol grip profile (compact).
+     */
+    static getPistolGripProfile(): Vector3[] {
+        return [
+            new Vector3(0, 0, 0),
+            new Vector3(2.5, 0, 0),   // Top width
+            new Vector3(2.8, -1.5, 0), // Back curve
+            new Vector3(2.5, -6, 0),  // Bottom back
+            new Vector3(0.5, -6, 0),  // Bottom front
+            new Vector3(0.5, -1, 0),  // Front
+            new Vector3(0, 0, 0)      // Close
+        ];
+    }
+
+    /**
+     * Returns a tactical grip profile (modern, vertical).
+     */
+    static getTacticalGripProfile(): Vector3[] {
+        return [
+            new Vector3(0, 0, 0),
+            new Vector3(2.2, 0, 0),   // Top width
+            new Vector3(2.2, -1, 0),  // Straight sides
+            new Vector3(2.5, -2, 0),  // Palm swell
+            new Vector3(2.2, -5, 0),  // Bottom swell
+            new Vector3(1.5, -6.5, 0), // Bottom taper
+            new Vector3(0.8, -6.5, 0), // Bottom front
+            new Vector3(0.5, -5, 0),  // Front taper
+            new Vector3(0.5, -1, 0),  // Front straight
+            new Vector3(0, 0, 0)      // Close
+        ];
+    }
 }
+

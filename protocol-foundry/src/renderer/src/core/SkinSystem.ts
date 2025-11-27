@@ -10,7 +10,7 @@ export class SkinSystem {
         const width = 512;
         const height = 512;
         const texture = new DynamicTexture(`skin_${type}`, { width, height }, scene, false);
-        const ctx = texture.getContext();
+        const ctx = texture.getContext() as unknown as CanvasRenderingContext2D;
 
         // Background
         ctx.fillStyle = '#2A2A2A';

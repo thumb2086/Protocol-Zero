@@ -258,17 +258,32 @@ export class FPSController {
 
         const endPoint = hit?.pickedPoint || origin.add(direction.scale(100))
 
-        // Visual Tracer: From muzzle to hit point
+        // Visual Tracer: From muzzle to hit point (Enhanced visibility)
         const trail = MeshBuilder.CreateLines('trail', {
             points: [muzzleFlashPos, endPoint],
             updatable: false
         }, this.scene)
-        trail.color = new Color3(1, 1, 0) // Yellow trail
+        trail.color = new Color3(1, 0.9, 0.2) // Bright yellow
+        trail.alpha = 1.0
+
+        // Add thicker tube for better visibility
+        const trailTube = MeshBuilder.CreateTube('trailTube', {
+            path: [muzzleFlashPos, endPoint],
+            radius: 0.015,
+            tessellation: 8,
+            updatable: false
+        }, this.scene)
+
+        const trailMat = new StandardMaterial('trailMat', this.scene)
+        trailMat.emissiveColor = new Color3(1, 0.9, 0.2)
+        trailMat.disableLighting = true
+        trailTube.material = trailMat
 
         // Fade out trail
         setTimeout(() => {
             trail.dispose()
-        }, 50)
+            trailTube.dispose()
+        }, 100) // Increased visibility duration
 
         if (hit?.pickedMesh) {
             // Visual: Hit Marker
@@ -332,6 +347,23 @@ export class FPSController {
             this.updateHUD()
             console.log('Reload Complete')
         }, 2000) // 2 seconds reload
+    }
+
+    /**
+     * Find muzzle flash point in weapon hierarchy
+     */
+    private findMuzzleFlashPoint(weaponMesh: Mesh): Mesh | null {
+        // Search for a mesh named 'muzzle' or 'muzzle_flash_point'
+        const children = weaponMesh.getChildMeshes()
+
+        for (const child of children) {
+            const name = child.name.toLowerCase()
+            if (name.includes('muzzle') || name.includes('barrel_end')) {
+                return child as Mesh
+            }
+        }
+
+        return null
     }
 
     public getCamera(): UniversalCamera {

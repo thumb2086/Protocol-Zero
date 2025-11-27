@@ -193,6 +193,15 @@ function createScene() {
         engine.resize()
     })
 
+    // Auto-request pointer lock after scene is ready
+    setTimeout(() => {
+        const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement
+        if (canvas) {
+            canvas.requestPointerLock()
+            console.log('✓ Auto-requested pointer lock - WASD controls active')
+        }
+    }, 500)
+
     console.log('✓ Scene initialized')
     console.log('=================================')
     console.log('MAP:', '🗺️  The Range (Training)')

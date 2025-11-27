@@ -71,22 +71,26 @@ export class FPSController {
     }
 
     private setupKeyboardInput() {
-        this.scene.actionManager = new ActionManager(this.scene)
+        // Use window event listeners - more reliable than scene observable
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase()
+            this.inputMap[key] = true
 
-        // Key Down/Up
-        this.scene.onKeyboardObservable.add((kbInfo) => {
-            if (kbInfo.type === KeyboardEventTypes.KEYDOWN) {
-                const key = kbInfo.event.key.toLowerCase()
-                this.inputMap[key] = true
-
-                if (key === 'r') {
-                    this.reload()
-                }
+            if (['w', 'a', 's', 'd'].includes(key)) {
+                console.log(`[FPSController] Key DOWN: ${key.toUpperCase()}`)
             }
-            if (kbInfo.type === KeyboardEventTypes.KEYUP) {
-                this.inputMap[kbInfo.event.key.toLowerCase()] = false
+
+            if (key === 'r') {
+                this.reload()
             }
         })
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase()
+            this.inputMap[key] = false
+        })
+
+        console.log('[FPSController] Using window keyboard listeners')
     }
 
     /**

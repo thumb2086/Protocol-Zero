@@ -88,10 +88,11 @@ export class UIManager {
         if (this.gameHud) this.gameHud.style.display = 'block'
         if (this.crosshair) this.crosshair.style.display = 'block'
 
-        // Request pointer lock
+        // Request pointer lock immediately when Start Game is clicked
         const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement
         if (canvas) {
             canvas.requestPointerLock()
+            console.log('[UI] Pointer lock requested')
         }
 
         // Trigger game start callback

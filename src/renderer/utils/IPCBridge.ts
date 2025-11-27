@@ -64,5 +64,11 @@ declare global {
                 send: (channel: string, ...args: any[]) => void
             }
         }
+        api?: {
+            weapon: {
+                equipPart: (slot: string, partData: any) => void
+                onPartEquipped: (callback: (data: { slot: string; partData: any; success: boolean }) => void) => void
+            }
+        }
     }
 }

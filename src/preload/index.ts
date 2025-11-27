@@ -7,6 +7,10 @@ const api = {
         select: (weaponId: string) => ipcRenderer.invoke('weapon:select', weaponId),
         onLoaded: (callback: (weaponId: string) => void) => {
             ipcRenderer.on('weapon:loaded', (_event, weaponId) => callback(weaponId))
+        },
+        equipPart: (slot: string, partData: any) => ipcRenderer.send('equip-part', { slot, partData }),
+        onPartEquipped: (callback: (data: { slot: string; partData: any; success: boolean }) => void) => {
+            ipcRenderer.on('part-equipped', (_event, data) => callback(data))
         }
     }
 }

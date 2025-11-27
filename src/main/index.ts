@@ -1,14 +1,16 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 // import { GameServer } from './server'
+
+let mainWindow: BrowserWindow | null = null
 
 // Initialize UDP Game Server (可選，用環境變量控制)
 // const ENABLE_GAME_SERVER = process.env.ENABLE_GAME_SERVER !== 'false'
 // const gameServer = ENABLE_GAME_SERVER ? new GameServer(41234) : null
 
 function createWindow(): void {
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 1280,
         height: 720,
         show: false,
@@ -22,7 +24,7 @@ function createWindow(): void {
     })
 
     mainWindow.on('ready-to-show', () => {
-        mainWindow.show()
+        mainWindow?.show()
     })
 
     mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -42,6 +44,32 @@ app.whenReady().then(() => {
 
     app.on('browser-window-created', (_, window) => {
         optimizer.watchWindowShortcuts(window)
+    })
+
+    // IPC Handler for part equipping
+    ipcMain.on('equip-part', (_event, data: { slot: string; partData: any }) => {
+        console.log('[Main] Received equip-part request:', data)
+
+        if (mainWindow && mainWindow.webContents) {
+            try {
+                mainWindow.webContents.send('part-equipped', {
+                    slot: data.slot,
+                    partData: data.partData,
+                    success: true
+                })
+                console.log('[Main] Part equip request forwarded to renderer')
+            } catch (error) {
+                console.error('[Main] Error forwarding part equip request:', error)
+                mainWindow.webContents.send('part-equipped', {
+                    slot: data.slot,
+                    partData: data.partData,
+                    success: false,
+                    error: String(error)
+                })
+            }
+        } else {
+            console.warn('[Main] No main window available to forward part equip request')
+        }
     })
 
     // Start the UDP game server (暫時禁用)

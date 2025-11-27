@@ -83,6 +83,10 @@ const api = {
     select: (weaponId) => electron.ipcRenderer.invoke("weapon:select", weaponId),
     onLoaded: (callback) => {
       electron.ipcRenderer.on("weapon:loaded", (_event, weaponId) => callback(weaponId));
+    },
+    equipPart: (slot, partData) => electron.ipcRenderer.send("equip-part", { slot, partData }),
+    onPartEquipped: (callback) => {
+      electron.ipcRenderer.on("part-equipped", (_event, data) => callback(data));
     }
   }
 };

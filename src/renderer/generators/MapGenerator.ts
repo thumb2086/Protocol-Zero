@@ -6,15 +6,15 @@ import { Scene, MeshBuilder, StandardMaterial, Color3, Vector3, Mesh, PointLight
  */
 export class MapGenerator {
     private scene: Scene
-    private glowLayer: GlowLayer
+    // private glowLayer: GlowLayer
     public staticMeshes: Mesh[] = []
 
     constructor(scene: Scene) {
         this.scene = scene
 
         // Enable glow layer for neon aesthetics
-        this.glowLayer = new GlowLayer('glow', scene)
-        this.glowLayer.intensity = 0.8
+        // this.glowLayer = new GlowLayer('glow', scene)
+        // this.glowLayer.intensity = 0.8
     }
 
     /**
@@ -104,7 +104,7 @@ export class MapGenerator {
 
         const mat = new StandardMaterial('floorMat', this.scene)
         mat.diffuseTexture = gridTexture
-        mat.emissiveColor = new Color3(0, 0.08, 0.12) // Subtle cyan glow
+        mat.emissiveColor = new Color3(0, 0, 0) // No glow
         mat.specularColor = new Color3(0.2, 0.2, 0.2)
         mat.specularPower = 128
         floor.material = mat
@@ -134,7 +134,7 @@ export class MapGenerator {
 
             const mat = new StandardMaterial(`boxMat_${i}`, this.scene)
             mat.diffuseColor = new Color3(0.2, 0.2, 0.25)
-            mat.emissiveColor = new Color3(0.8, 0.5, 0) // Orange glow
+            mat.emissiveColor = new Color3(0, 0, 0) // No glow
             mat.specularPower = 32
             box.material = mat
 
@@ -197,7 +197,7 @@ export class MapGenerator {
 
         const mat = new StandardMaterial('targetMat', this.scene)
         mat.diffuseTexture = texture
-        mat.emissiveColor = new Color3(0.3, 0, 0) // Red glow
+        mat.emissiveColor = new Color3(0, 0, 0) // No glow
         mat.backFaceCulling = false
         target.material = mat
 
@@ -254,7 +254,7 @@ export class MapGenerator {
 
         const mat = new StandardMaterial('wallMat', this.scene)
         mat.diffuseColor = new Color3(0.1, 0.1, 0.15)
-        mat.emissiveColor = new Color3(0, 0.4, 0.6) // Bright cyan edges
+        mat.emissiveColor = new Color3(0, 0, 0) // No glow
         mat.specularPower = 64
         wall.material = mat
 
@@ -285,7 +285,7 @@ export class MapGenerator {
 
         const mat = new StandardMaterial('pillarMat', this.scene)
         mat.diffuseColor = new Color3(0.15, 0.15, 0.2)
-        mat.emissiveColor = new Color3(0, 0.5, 0.8) // Cyan
+        mat.emissiveColor = new Color3(0, 0, 0) // No glow
         mat.specularPower = 64
         pillar.material = mat
 
@@ -316,7 +316,7 @@ export class MapGenerator {
 
         const mat = new StandardMaterial('platformMat', this.scene)
         mat.diffuseColor = new Color3(0.15, 0.15, 0.2)
-        mat.emissiveColor = new Color3(0.5, 0, 1) // Purple glow
+        mat.emissiveColor = new Color3(0, 0, 0) // No glow
         mat.specularPower = 64
         platform.material = mat
 

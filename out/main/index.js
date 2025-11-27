@@ -94,8 +94,9 @@ const optimizer = {
     });
   }
 };
+let mainWindow = null;
 function createWindow() {
-  const mainWindow = new electron.BrowserWindow({
+  mainWindow = new electron.BrowserWindow({
     width: 1280,
     height: 720,
     show: false,
@@ -110,7 +111,7 @@ function createWindow() {
     }
   });
   mainWindow.on("ready-to-show", () => {
-    mainWindow.show();
+    mainWindow?.show();
   });
   mainWindow.webContents.setWindowOpenHandler((details) => {
     electron.shell.openExternal(details.url);
@@ -126,6 +127,29 @@ electron.app.whenReady().then(() => {
   electronApp.setAppUserModelId("com.electron");
   electron.app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
+  });
+  electron.ipcMain.on("equip-part", (_event, data) => {
+    console.log("[Main] Received equip-part request:", data);
+    if (mainWindow && mainWindow.webContents) {
+      try {
+        mainWindow.webContents.send("part-equipped", {
+          slot: data.slot,
+          partData: data.partData,
+          success: true
+        });
+        console.log("[Main] Part equip request forwarded to renderer");
+      } catch (error) {
+        console.error("[Main] Error forwarding part equip request:", error);
+        mainWindow.webContents.send("part-equipped", {
+          slot: data.slot,
+          partData: data.partData,
+          success: false,
+          error: String(error)
+        });
+      }
+    } else {
+      console.warn("[Main] No main window available to forward part equip request");
+    }
   });
   createWindow();
   electron.app.on("activate", () => {

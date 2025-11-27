@@ -11,10 +11,19 @@ const foundryAPI = {
         ipcRenderer.invoke('foundry:getPath', type, ...parts)
 }
 
+// Weapon API for part equipping
+const weaponAPI = {
+    equipPart: (slot: string, partData: any) => ipcRenderer.send('equip-part', { slot, partData }),
+    onPartEquipped: (callback: (data: { slot: string; partData: any; success: boolean }) => void) => {
+        ipcRenderer.on('part-equipped', (_event, data) => callback(data))
+    }
+}
+
 if (process.contextIsolated) {
     try {
         contextBridge.exposeInMainWorld('electron', electronAPI)
         contextBridge.exposeInMainWorld('foundry', foundryAPI)
+        contextBridge.exposeInMainWorld('weapon', weaponAPI)
     } catch (error) {
         console.error(error)
     }
@@ -23,4 +32,6 @@ if (process.contextIsolated) {
     window.electron = electronAPI
     // @ts-ignore
     window.foundry = foundryAPI
+    // @ts-ignore
+    window.weapon = weaponAPI
 }

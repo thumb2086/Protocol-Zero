@@ -195,11 +195,30 @@ const FabricationPanel: React.FC = () => {
             <div className="pt-4">
                 <button
                     onClick={() => {
-                        // When user clicks "Fabricate Part", we switch to Assembly tab to see the result
-                        // In a full implementation, this would save the part to inventory
                         console.log(`製造零件: ${t.partTypes[selectedPart]}`, params)
-                        // For now, just log that we're fabricating this part
-                        alert(`✅ 已製造: ${t.partTypes[selectedPart]}\n\n這個功能將在零件庫系統完成後保存零件。\n目前可以在組裝標籤中查看完整武器。`)
+
+                        // Send IPC message to equip the part in the game
+                        if (window.electron?.ipcRenderer) {
+                            window.electron.ipcRenderer.send('equip-part', {
+                                slot: selectedPart,
+                                partData: {
+                                    ...params,
+                                    partType: selectedPart
+                                }
+                            })
+
+                            // Show brief feedback
+                            const notification = document.createElement('div')
+                            notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg z-50'
+                            notification.textContent = `✓ ${t.partTypes[selectedPart]} 已裝備`
+                            document.body.appendChild(notification)
+
+                            setTimeout(() => {
+                                notification.remove()
+                            }, 2000)
+                        } else {
+                            alert(`⚠️ Electron IPC 不可用\n\n請在 Electron 環境中運行此功能。`)
+                        }
                     }}
                     className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-wider rounded transition-colors"
                 >

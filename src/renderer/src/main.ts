@@ -70,6 +70,37 @@ async function initGame() {
             }
         })
 
+        // Listen for part equipping from Foundry
+        if (window.api && window.api.weapon) {
+            window.api.weapon.onPartEquipped((data: { slot: string; partData: any; success: boolean }) => {
+                console.log(`[IPC] Part equipped:`, data)
+
+                if (!data.success) {
+                    console.error('[IPC] Part equip failed:', data)
+                    return
+                }
+
+                if (fpsController && weaponGen && currentWeapon) {
+                    try {
+                        // Hot-swap the component
+                        const newWeapon = weaponGen.swapComponent(currentWeapon, data.slot, data.partData)
+
+                        // Update global reference
+                        currentWeapon = newWeapon
+
+                        // Re-attach to FPS controller
+                        fpsController.attachWeapon(newWeapon)
+
+                        console.log(`[IPC] ✓ Successfully equipped ${data.slot}`)
+                    } catch (error) {
+                        console.error('[IPC] Error during hot-swap:', error)
+                    }
+                } else {
+                    console.warn('[IPC] Cannot equip part - game not fully initialized')
+                }
+            })
+        }
+
         console.log('✓ UI System initialized - Waiting for user to start game')
 
     } catch (err) {
@@ -84,7 +115,7 @@ async function initGame() {
 
 function createScene() {
     scene = new Scene(engine)
-    scene.clearColor = new Color4(0.02, 0.02, 0.05, 1) // Darker background
+    scene.clearColor = new Color4(0.1, 0.15, 0.25, 1) // Twilight Blue
 
     // FPS Controller
     fpsController = new FPSController(scene, new Vector3(0, 1.6, -10))

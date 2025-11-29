@@ -18,76 +18,87 @@ export class ComponentFactory {
         mat.specularColor = new Color3(0.2, 0.2, 0.2)
 
         if (style === 'vandal') {
-            // AK-Style Receiver
-            const body = MeshBuilder.CreateBox('body', { width: 0.2, height: 0.3, depth: 1.0 }, this.scene)
+            // High-Fidelity Vandal Receiver using ExtrudePolygon
+            // Profile defined in XZ plane (top-down), then rotated to be side view
+            const shape = [
+                new Vector3(0, 0, 0),       // Bottom Rear
+                new Vector3(0, 0, 0.25),    // Top Rear
+                new Vector3(0.6, 0, 0.25),  // Top Front (Receiver end)
+                new Vector3(0.6, 0, 0.15),  // Front Step down
+                new Vector3(1.0, 0, 0.15),  // Handguard Top
+                new Vector3(1.0, 0, -0.05), // Handguard Bottom
+                new Vector3(0.4, 0, -0.05), // Mag Well Front
+                new Vector3(0.4, 0, 0),     // Mag Well Top
+                new Vector3(0.2, 0, 0)      // Trigger Guard Front
+            ]
 
-            // Dust Cover (Rounded top)
-            const cover = MeshBuilder.CreateCylinder('cover', { diameter: 0.2, height: 1.0, tessellation: 16 }, this.scene)
-            cover.rotation.x = Math.PI / 2
-            cover.position.y = 0.15
-            cover.scaling.x = 1.1 // Slightly wider
+            // Extrude "width" of the gun
+            const body = MeshBuilder.ExtrudePolygon('vandal_body', {
+                shape: shape,
+                depth: 0.15,
+                sideOrientation: Mesh.DOUBLESIDE
+            }, this.scene)
 
-            // Rear Sight Block
-            const sightBlock = MeshBuilder.CreateBox('sight', { width: 0.22, height: 0.2, depth: 0.3 }, this.scene)
-            sightBlock.position.y = 0.2
-            sightBlock.position.z = 0.35
+            // Rotate to correct orientation
+            body.rotation.z = Math.PI / 2 // Stand up
+            body.rotation.y = Math.PI / 2 // Face forward
 
-            const bodyCSG = CSG.FromMesh(body)
-            const coverCSG = CSG.FromMesh(cover)
-            const sightCSG = CSG.FromMesh(sightBlock)
+            // Center it
+            body.position.x = -0.075 // Half of depth (0.15)
+            body.position.y = 0      // Adjust vertical alignment
+            body.position.z = -0.2   // Adjust forward/back alignment
 
-            const combo = bodyCSG.union(coverCSG).union(sightCSG)
-            visual = combo.toMesh('vandal_receiver', null, this.scene)
-
-            body.dispose(); cover.dispose(); sightBlock.dispose()
+            visual = body
 
             // Mount Points
-            this.createMountPoint(mesh, 'barrel_mount', new Vector3(0, 0.1, 0.5))
-            this.createMountPoint(mesh, 'stock_mount', new Vector3(0, 0, -0.5))
-            this.createMountPoint(mesh, 'mag_mount', new Vector3(0, -0.15, 0.2))
-            this.createMountPoint(mesh, 'scope_mount', new Vector3(0, 0.3, -0.1))
-            this.createMountPoint(mesh, 'grip_mount', new Vector3(0, -0.15, 0.4))
+            this.createMountPoint(mesh, 'barrel_mount', new Vector3(0, 0.1, 0.8))
+            this.createMountPoint(mesh, 'stock_mount', new Vector3(0, 0.1, -0.2))
+            this.createMountPoint(mesh, 'mag_mount', new Vector3(0, -0.1, 0.3))
+            this.createMountPoint(mesh, 'scope_mount', new Vector3(0, 0.26, 0.1))
+            this.createMountPoint(mesh, 'grip_mount', new Vector3(0, -0.05, 0.7))
 
         } else if (style === 'phantom') {
-            // Modern Carbine Receiver (M4-ish but sleek)
-            const upper = MeshBuilder.CreateBox('upper', { width: 0.2, height: 0.25, depth: 0.8 }, this.scene)
-            upper.position.y = 0.15
+            // High-Fidelity Phantom Receiver (Sleek, Modern)
+            const shape = [
+                new Vector3(0, 0, 0),
+                new Vector3(0, 0, 0.22),
+                new Vector3(0.5, 0, 0.22),
+                new Vector3(0.8, 0, 0.18), // Sloped front
+                new Vector3(0.8, 0, -0.05),
+                new Vector3(0.3, 0, -0.05), // Mag well area
+                new Vector3(0.15, 0, 0)
+            ]
 
-            const lower = MeshBuilder.CreateBox('lower', { width: 0.18, height: 0.2, depth: 0.8 }, this.scene)
-            lower.position.y = -0.05
+            const body = MeshBuilder.ExtrudePolygon('phantom_body', {
+                shape: shape,
+                depth: 0.14,
+                sideOrientation: Mesh.DOUBLESIDE
+            }, this.scene)
 
-            // Mag Well (Flared)
-            const magWell = MeshBuilder.CreateBox('magWell', { width: 0.22, height: 0.25, depth: 0.25 }, this.scene)
-            magWell.position.y = -0.15
-            magWell.position.z = 0.2
+            body.rotation.z = Math.PI / 2
+            body.rotation.y = Math.PI / 2
+            body.position.x = -0.07
+            body.position.z = -0.1
 
-            const uCSG = CSG.FromMesh(upper)
-            const lCSG = CSG.FromMesh(lower)
-            const mCSG = CSG.FromMesh(magWell)
-
-            const combo = uCSG.union(lCSG).union(mCSG)
-            visual = combo.toMesh('phantom_receiver', null, this.scene)
-
-            upper.dispose(); lower.dispose(); magWell.dispose()
+            visual = body
 
             // Mount Points
-            this.createMountPoint(mesh, 'barrel_mount', new Vector3(0, 0.15, 0.4))
-            this.createMountPoint(mesh, 'stock_mount', new Vector3(0, 0.05, -0.4))
-            this.createMountPoint(mesh, 'mag_mount', new Vector3(0, -0.25, 0.2))
-            this.createMountPoint(mesh, 'scope_mount', new Vector3(0, 0.28, 0))
-            this.createMountPoint(mesh, 'grip_mount', new Vector3(0, -0.15, 0.3)) // Integrated grip usually, but keeping modular
+            this.createMountPoint(mesh, 'barrel_mount', new Vector3(0, 0.1, 0.7))
+            this.createMountPoint(mesh, 'stock_mount', new Vector3(0, 0.1, -0.1))
+            this.createMountPoint(mesh, 'mag_mount', new Vector3(0, -0.15, 0.2))
+            this.createMountPoint(mesh, 'scope_mount', new Vector3(0, 0.23, 0.1))
+            this.createMountPoint(mesh, 'grip_mount', new Vector3(0, -0.05, 0.5))
 
         } else {
             // Classic Pistol Frame
+            // ... (Classic logic remains)
             const frame = MeshBuilder.CreateBox('frame', { width: 0.18, height: 0.2, depth: 0.6 }, this.scene)
-
-            // Grip (Angled)
+            // ...
             const grip = MeshBuilder.CreateBox('grip', { width: 0.16, height: 0.4, depth: 0.25 }, this.scene)
             grip.rotation.x = Math.PI / 8
             grip.position.y = -0.25
             grip.position.z = -0.2
 
-            // Trigger Guard
             const guard = MeshBuilder.CreateTorus('guard', { diameter: 0.15, thickness: 0.03 }, this.scene)
             guard.rotation.y = Math.PI / 2
             guard.position.y = -0.15
@@ -98,15 +109,15 @@ export class ComponentFactory {
 
             const combo = fCSG.union(gCSG)
             visual = combo.toMesh('classic_frame', null, this.scene)
-            guard.parent = visual // Keep guard separate for simplicity or merge if needed
+            guard.parent = visual
 
             frame.dispose(); grip.dispose()
 
             // Mount Points
-            this.createMountPoint(mesh, 'barrel_mount', new Vector3(0, 0.1, 0.3)) // Slide attaches here
-            this.createMountPoint(mesh, 'mag_mount', new Vector3(0, -0.5, -0.25)) // Bottom of grip
+            this.createMountPoint(mesh, 'barrel_mount', new Vector3(0, 0.1, 0.3))
+            this.createMountPoint(mesh, 'mag_mount', new Vector3(0, -0.5, -0.25))
 
-            mat.diffuseColor = new Color3(0.1, 0.1, 0.1) // Polymer Black
+            mat.diffuseColor = new Color3(0.1, 0.1, 0.1)
         }
 
         visual.material = mat
@@ -125,30 +136,31 @@ export class ComponentFactory {
 
         if (style === 'vandal') {
             // AK Barrel + Gas Tube
-            const barrel = MeshBuilder.CreateCylinder('barrel', { diameter: 0.08, height: length }, this.scene)
+            const barrel = MeshBuilder.CreateCylinder('barrel', { diameter: 0.06, height: length }, this.scene)
             barrel.rotation.x = Math.PI / 2
             barrel.position.z = length / 2
 
-            const gasTube = MeshBuilder.CreateCylinder('gasTube', { diameter: 0.1, height: length * 0.6 }, this.scene)
+            const gasTube = MeshBuilder.CreateCylinder('gasTube', { diameter: 0.08, height: length * 0.6 }, this.scene)
             gasTube.rotation.x = Math.PI / 2
-            gasTube.position.y = 0.12
+            gasTube.position.y = 0.08
             gasTube.position.z = length * 0.3
 
-            const handguard = MeshBuilder.CreateBox('handguard', { width: 0.18, height: 0.25, depth: length * 0.5 }, this.scene)
-            handguard.position.z = length * 0.25
-            handguard.position.y = 0.05
+            // Front Sight Block
+            const frontSight = MeshBuilder.CreateBox('frontSight', { width: 0.05, height: 0.15, depth: 0.1 }, this.scene)
+            frontSight.position.z = length * 0.9
+            frontSight.position.y = 0.1
 
             const bCSG = CSG.FromMesh(barrel)
             const gCSG = CSG.FromMesh(gasTube)
-            const hCSG = CSG.FromMesh(handguard)
+            const fCSG = CSG.FromMesh(frontSight)
 
-            const combo = bCSG.union(gCSG).union(hCSG)
+            const combo = bCSG.union(gCSG).union(fCSG)
             visual = combo.toMesh('vandal_barrel', null, this.scene)
 
-            barrel.dispose(); gasTube.dispose(); handguard.dispose()
+            barrel.dispose(); gasTube.dispose(); frontSight.dispose()
 
             // Muzzle Brake
-            const brake = MeshBuilder.CreateCylinder('brake', { diameter: 0.12, height: 0.15 }, this.scene)
+            const brake = MeshBuilder.CreateCylinder('brake', { diameter: 0.08, height: 0.1 }, this.scene)
             brake.rotation.x = Math.PI / 2
             brake.position.z = length
             brake.parent = visual
@@ -171,7 +183,7 @@ export class ComponentFactory {
             handguard.dispose(); silencer.dispose()
 
         } else {
-            // Classic Slide (Technically part of upper, but treating as barrel assembly for modularity)
+            // Classic Slide
             const slide = MeshBuilder.CreateBox('slide', { width: 0.2, height: 0.15, depth: length }, this.scene)
             slide.position.z = length / 2 - 0.1
 
@@ -197,27 +209,26 @@ export class ComponentFactory {
         mat.diffuseColor = new Color3(0.15, 0.15, 0.15)
 
         if (style === 'vandal') {
-            // Skeleton Stock
-            const topStrut = MeshBuilder.CreateBox('top', { width: 0.1, height: 0.05, depth: 0.8 }, this.scene)
-            topStrut.position.z = -0.4
-            topStrut.position.y = 0.1
+            // Detailed Stock Profile
+            const shape = [
+                new Vector3(0, 0, 0),
+                new Vector3(0, 0, 0.3),
+                new Vector3(-0.4, 0, 0.3),
+                new Vector3(-0.4, 0, -0.1),
+                new Vector3(-0.1, 0, 0)
+            ]
 
-            const botStrut = MeshBuilder.CreateBox('bot', { width: 0.1, height: 0.05, depth: 0.7 }, this.scene)
-            botStrut.position.z = -0.35
-            botStrut.position.y = -0.1
-            botStrut.rotation.x = -Math.PI / 12
+            const stock = MeshBuilder.ExtrudePolygon('vandal_stock', {
+                shape: shape,
+                depth: 0.12,
+                sideOrientation: Mesh.DOUBLESIDE
+            }, this.scene)
 
-            const buttPlate = MeshBuilder.CreateBox('butt', { width: 0.12, height: 0.4, depth: 0.1 }, this.scene)
-            buttPlate.position.z = -0.8
+            stock.rotation.z = Math.PI / 2
+            stock.rotation.y = Math.PI / 2
+            stock.position.x = -0.06
 
-            const tCSG = CSG.FromMesh(topStrut)
-            const bCSG = CSG.FromMesh(botStrut)
-            const pCSG = CSG.FromMesh(buttPlate)
-
-            const combo = tCSG.union(bCSG).union(pCSG)
-            visual = combo.toMesh('vandal_stock', null, this.scene)
-
-            topStrut.dispose(); botStrut.dispose(); buttPlate.dispose()
+            visual = stock
 
         } else {
             // Modern Adjustable Stock
@@ -229,19 +240,7 @@ export class ComponentFactory {
             stockBody.position.z = -0.6
             stockBody.position.y = -0.05
 
-            const cheekRest = MeshBuilder.CreateCylinder('cheek', { diameter: 0.16, height: 0.4 }, this.scene)
-            cheekRest.rotation.x = Math.PI / 2
-            cheekRest.position.z = -0.6
-            cheekRest.position.y = 0.1
-
-            const tCSG = CSG.FromMesh(tube)
-            const bCSG = CSG.FromMesh(stockBody)
-            const cCSG = CSG.FromMesh(cheekRest)
-
-            const combo = tCSG.union(bCSG).union(cCSG)
-            visual = combo.toMesh('phantom_stock', null, this.scene)
-
-            tube.dispose(); stockBody.dispose(); cheekRest.dispose()
+            visual = Mesh.MergeMeshes([tube, stockBody], true, true, undefined, false, true) as Mesh
         }
 
         visual.material = mat
@@ -259,22 +258,25 @@ export class ComponentFactory {
         mat.diffuseColor = new Color3(0.1, 0.1, 0.1)
 
         if (style === 'vandal') {
-            // Curved Banana Mag
-            const seg1 = MeshBuilder.CreateBox('seg1', { width: 0.12, height: 0.4, depth: 0.25 }, this.scene)
-            seg1.position.y = -0.2
+            // Curved Mag Profile
+            const shape = [
+                new Vector3(0, 0, 0),
+                new Vector3(0.2, 0, 0),
+                new Vector3(0.15, 0, -0.4),
+                new Vector3(-0.05, 0, -0.4)
+            ]
 
-            const seg2 = MeshBuilder.CreateBox('seg2', { width: 0.12, height: 0.4, depth: 0.25 }, this.scene)
-            seg2.rotation.x = Math.PI / 6
-            seg2.position.y = -0.5
-            seg2.position.z = 0.1
+            const mag = MeshBuilder.ExtrudePolygon('vandal_mag', {
+                shape: shape,
+                depth: 0.1,
+                sideOrientation: Mesh.DOUBLESIDE
+            }, this.scene)
 
-            const s1CSG = CSG.FromMesh(seg1)
-            const s2CSG = CSG.FromMesh(seg2)
+            mag.rotation.z = Math.PI / 2
+            mag.rotation.y = Math.PI / 2
+            mag.position.x = -0.05
 
-            const combo = s1CSG.union(s2CSG)
-            visual = combo.toMesh('vandal_mag', null, this.scene)
-
-            seg1.dispose(); seg2.dispose()
+            visual = mag
 
         } else if (style === 'phantom') {
             // Straight Mag
@@ -285,6 +287,106 @@ export class ComponentFactory {
             // Pistol Baseplate
             visual = MeshBuilder.CreateBox('baseplate', { width: 0.16, height: 0.05, depth: 0.25 }, this.scene)
             visual.position.y = 0
+        }
+
+        visual.material = mat
+        visual.parent = mesh
+        return mesh
+    }
+
+    /**
+     * Create a Scope
+     */
+    public createScope(id: string, style: 'red_dot' | 'holo' | 'sniper' = 'red_dot'): Mesh {
+        const mesh = new Mesh(`scope_${id}`, this.scene)
+        let visual: Mesh
+        const mat = new StandardMaterial('scopeMat', this.scene)
+        mat.diffuseColor = new Color3(0.1, 0.1, 0.1)
+
+        if (style === 'sniper') {
+            // Long Range Scope
+            const tube = MeshBuilder.CreateCylinder('tube', { diameter: 0.1, height: 0.8 }, this.scene)
+            tube.rotation.x = Math.PI / 2
+
+            const frontBell = MeshBuilder.CreateCylinder('front', { diameter: 0.15, height: 0.2 }, this.scene)
+            frontBell.rotation.x = Math.PI / 2
+            frontBell.position.z = 0.4
+
+            const rearBell = MeshBuilder.CreateCylinder('rear', { diameter: 0.12, height: 0.15 }, this.scene)
+            rearBell.rotation.x = Math.PI / 2
+            rearBell.position.z = -0.35
+
+            const tCSG = CSG.FromMesh(tube)
+            const fCSG = CSG.FromMesh(frontBell)
+            const rCSG = CSG.FromMesh(rearBell)
+
+            const combo = tCSG.union(fCSG).union(rCSG)
+            visual = combo.toMesh('sniper_scope', null, this.scene)
+
+            tube.dispose(); frontBell.dispose(); rearBell.dispose()
+
+            // Lens
+            const lens = MeshBuilder.CreateCylinder('lens', { diameter: 0.13, height: 0.01 }, this.scene)
+            lens.rotation.x = Math.PI / 2
+            lens.position.z = 0.49
+            lens.parent = visual
+            const lensMat = new StandardMaterial('lensMat', this.scene)
+            lensMat.diffuseColor = new Color3(0, 0, 0.2)
+            lensMat.specularColor = new Color3(1, 1, 1)
+            lensMat.alpha = 0.8
+            lens.material = lensMat
+
+        } else {
+            // Red Dot / Holo
+            const base = MeshBuilder.CreateBox('base', { width: 0.12, height: 0.05, depth: 0.2 }, this.scene)
+
+            const frame = MeshBuilder.CreateBox('frame', { width: 0.14, height: 0.15, depth: 0.05 }, this.scene)
+            frame.position.y = 0.1
+            frame.position.z = 0.05
+
+            const glass = MeshBuilder.CreatePlane('glass', { size: 0.12 }, this.scene)
+            glass.position.y = 0.1
+            glass.position.z = 0.05
+            glass.parent = base
+
+            const bCSG = CSG.FromMesh(base)
+            const fCSG = CSG.FromMesh(frame)
+
+            const combo = bCSG.union(fCSG)
+            visual = combo.toMesh('red_dot', null, this.scene)
+
+            base.dispose(); frame.dispose()
+
+            const glassMat = new StandardMaterial('glassMat', this.scene)
+            glassMat.diffuseColor = new Color3(0, 0.8, 0)
+            glassMat.emissiveColor = new Color3(0, 1, 0)
+            glassMat.alpha = 0.3
+            glass.material = glassMat
+        }
+
+        visual.material = mat
+        visual.parent = mesh
+        return mesh
+    }
+
+    /**
+     * Create a Grip
+     */
+    public createGrip(id: string, style: 'vertical' | 'angled' = 'vertical'): Mesh {
+        const mesh = new Mesh(`grip_${id}`, this.scene)
+        let visual: Mesh
+        const mat = new StandardMaterial('gripMat', this.scene)
+        mat.diffuseColor = new Color3(0.12, 0.12, 0.12)
+
+        if (style === 'angled') {
+            // Angled Foregrip
+            visual = MeshBuilder.CreateBox('angled', { width: 0.1, height: 0.25, depth: 0.15 }, this.scene)
+            visual.rotation.x = Math.PI / 4
+            visual.position.y = -0.15
+        } else {
+            // Vertical Grip
+            visual = MeshBuilder.CreateCylinder('vertical', { diameter: 0.1, height: 0.35 }, this.scene)
+            visual.position.y = -0.2
         }
 
         visual.material = mat

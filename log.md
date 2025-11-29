@@ -2,6 +2,15 @@
 
 ## 2025-11-29
 
+### 模組化零件系統 (Modular Component System)
+- **新增零件工廠**:
+  - `createScope`: 支援 `red_dot` (紅點), `holo` (全息), `sniper` (狙擊鏡)。
+  - `createGrip`: 支援 `vertical` (垂直握把), `angled` (三角握把)。
+- **WeaponAssembler 更新**:
+  - `assembleWeapon` 現在支援 `scope` 和 `grip` 參數。
+  - `generateVandal` 預設裝備 `red_dot` 和 `angled` 握把。
+  - `generatePhantom` 預設裝備 `red_dot` 和 `vertical` 握把。
+
 ### 視覺與模型升級 (Visual & Model Overhaul)
 - **ComponentFactory.ts 重寫**:
   - **Vandal (暴徒)**: 新增 AK 風格機匣、導氣管、香蕉彈匣、鏤空槍托。
@@ -16,16 +25,6 @@
   - `src/main/index.ts`: 啟動時自動同步 `protocol-foundry-repository` 到 `AppData/foundry`。
 - **IPC 修復**:
   - `src/main/index.ts`: 新增 `weapon:select` IPC 處理程序，解決選擇武器時的報錯。
-
-### 模組化零件系統 (Modular Component System)
-- **新增 `IWeaponPart.ts`**: 定義武器零件介面與統計數值結構。
-- **新增 `ComponentFactory.ts`**: 
-  - 實作 `createReceiver`: 包含 `barrel_mount`, `stock_mount`, `mag_mount`, `scope_mount` 等 TransformNode 掛載點。
-  - 實作 `createBarrel`, `createStock`, `createMagazine`: 基礎零件生成邏輯。
-- **重構 `WeaponAssembler.ts`**:
-  - 新增 `assembleWeapon`: 透過掛載點將零件組裝成整槍。
-  - 重構 `generateVandal`: 改用 `assembleWeapon` 進行組裝。
-  - 更新 `swapComponent`: 支援基於新架構的零件熱插拔。
 
 ### 修復 IDE 錯誤
 - **FPSController.ts**:

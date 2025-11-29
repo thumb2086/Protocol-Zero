@@ -24,7 +24,9 @@ export class WeaponAssembler {
         // Use the new modular assembly system
         const weapon = this.assembleWeapon('vandal', {
             barrelLength: 1.0,
-            skin: skin
+            skin: skin,
+            scope: 'red_dot',
+            grip: 'angled'
         })
         weapon.position = position
         return weapon
@@ -34,7 +36,9 @@ export class WeaponAssembler {
         // Use the new modular assembly system
         const weapon = this.assembleWeapon('phantom', {
             barrelLength: 0.9,
-            skin: 'default'
+            skin: 'default',
+            scope: 'red_dot',
+            grip: 'vertical'
         })
         weapon.position = position
         return weapon
@@ -46,16 +50,23 @@ export class WeaponAssembler {
     public assembleWeapon(type: 'vandal' | 'phantom' | 'classic', options: any = {}): Mesh {
         const root = new Mesh(`${type}_Root`, this.scene)
 
+        // Store configuration in metadata for persistence
+        root.metadata = {
+            type: type,
+            options: { ...options }
+        }
+
         // 1. Create Receiver (The Core)
         const receiver = this.componentFactory.createReceiver('core', type)
         receiver.parent = root
+
+        // ... (rest of assembly)
 
         // 2. Create & Attach Barrel
         const barrel = this.componentFactory.createBarrel('std', options.barrelLength || 1.0, type)
         this.attachPart(receiver, barrel, 'barrel_mount')
 
         // 3. Create & Attach Stock
-        // Classic usually doesn't have a stock, but we can support it if needed
         if (type !== 'classic') {
             const stock = this.componentFactory.createStock('std', type === 'phantom' ? 'phantom' : 'vandal')
             this.attachPart(receiver, stock, 'stock_mount')
@@ -65,7 +76,19 @@ export class WeaponAssembler {
         const mag = this.componentFactory.createMagazine('std', type)
         this.attachPart(receiver, mag, 'mag_mount')
 
-        // Apply Skin (Simple material application for now)
+        // 5. Create & Attach Scope (Optional)
+        if (options.scope) {
+            const scope = this.componentFactory.createScope('std', options.scope)
+            this.attachPart(receiver, scope, 'scope_mount')
+        }
+
+        // 6. Create & Attach Grip (Optional)
+        if (options.grip) {
+            const grip = this.componentFactory.createGrip('std', options.grip)
+            this.attachPart(receiver, grip, 'grip_mount')
+        }
+
+        // Apply Skin
         this.applySkin(root, options.skin || 'default')
 
         return root
@@ -104,27 +127,8 @@ export class WeaponAssembler {
         })
     }
 
-    public async loadCommunityWeapon(url: string, position: Vector3): Promise<AbstractMesh | null> {
-        try {
-            const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene)
-            const root = result.meshes[0]
-
-            // Normalize scale/rotation if needed (GLB usually exports with Z-forward, but Babylon might need adjustment)
-            root.position = position
-
-            // Ensure it has a name for easy identification
-            root.name = 'Community_Weapon_Root'
-
-            return root
-        } catch (error) {
-            console.error('Failed to load community weapon:', error)
-            return null
-        }
-    }
-
     /**
      * Hot-swap a weapon component
-     * Rebuilds the weapon with new part parameters while maintaining position/parent
      */
     public swapComponent(currentWeapon: Mesh, slot: string, partData: any): Mesh {
         console.log(`[WeaponAssembler] Swapping ${slot} with data:`, partData)
@@ -133,26 +137,40 @@ export class WeaponAssembler {
         const position = currentWeapon.position.clone()
         const rotation = currentWeapon.rotation.clone()
         const parent = currentWeapon.parent
-        const weaponType = currentWeapon.name.split('_')[0].toLowerCase() as 'vandal' | 'phantom' | 'classic'
+
+        // Retrieve existing options from metadata if available
+        let options: any = {}
+        let weaponType: 'vandal' | 'phantom' | 'classic' = 'vandal'
+
+        if (currentWeapon.metadata && currentWeapon.metadata.options) {
+            options = { ...currentWeapon.metadata.options }
+            weaponType = currentWeapon.metadata.type || 'vandal'
+        } else {
+            // Fallback if no metadata (shouldn't happen with new weapons)
+            weaponType = currentWeapon.name.split('_')[0].toLowerCase() as any
+            options = {
+                skin: 'flux',
+                scope: 'red_dot',
+                grip: 'angled',
+                barrelLength: 1.0
+            }
+        }
 
         // Dispose old weapon
         currentWeapon.dispose()
 
-        // Generate new weapon based on type
-        // In a real scenario, we would update the blueprint and re-assemble
-        // For now, we just re-assemble with default options + the change
-
-        const options: any = { skin: 'flux' } // Default skin
+        // Apply the change
+        if (slot === 'scope') options.scope = partData
+        if (slot === 'grip') options.grip = partData
+        if (slot === 'skin') options.skin = partData
         if (slot === 'barrel') {
-            options.barrelLength = partData.length || 1.2 // Example change
+            if (partData === 'long') options.barrelLength = 1.2
+            else if (partData === 'short') options.barrelLength = 0.8
+            else options.barrelLength = 1.0
         }
 
-        let newWeapon: Mesh
-        if (['vandal', 'phantom', 'classic'].includes(weaponType)) {
-            newWeapon = this.assembleWeapon(weaponType, options)
-        } else {
-            newWeapon = this.assembleWeapon('vandal', options)
-        }
+        // Re-assemble
+        const newWeapon = this.assembleWeapon(weaponType, options)
 
         // Restore weapon state
         newWeapon.position = position

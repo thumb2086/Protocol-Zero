@@ -19,12 +19,12 @@
   - [x] StockFactory（槍托）
   - [ ] ScopeFactory（瞄具）
   - [x] MagazineFactory（彈匣）
-  - [ ] ScopeFactory（瞄具/準鏡）
-  - [ ] GripFactory（握把）
-- [ ] 完善工廠邏輯
-  - [ ] 實作 createScope 方法
-  - [ ] 實作 createGrip 方法
-  - [ ] 更新 WeaponAssembler 支援 Scope 與 Grip 組裝
+  - [x] ScopeFactory（瞄具/準鏡）
+  - [x] GripFactory（握把）
+- [x] 完善工廠邏輯
+  - [x] 實作 createScope 方法
+  - [x] 實作 createGrip 方法
+  - [x] 更新 WeaponAssembler 支援 Scope 與 Grip 組裝
 
 ---
 
@@ -75,8 +75,8 @@
   - [ ] 擊殺提示
   - [ ] 回合計時器
   - [ ] 團隊選擇 UI
-  - [ ] 完善 Foundry UI（零件選擇、數值顯示）
-  - [ ] 修復選單功能（確保所有按鈕可用）
+  - [x] 完善 Foundry UI（零件選擇、數值顯示）
+  - [x] 修復選單功能（確保所有按鈕可用）
 
 ---
 

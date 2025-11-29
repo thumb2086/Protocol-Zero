@@ -55,7 +55,7 @@ async function initGame() {
         console.log('✓ Engine initialized')
 
         // Wait for user to click "Start Game"
-        uiManager.onStartGame(() => {
+        uiManager.onStartGame(async () => {
             console.log('[Phase 3] Starting Game...')
             await createScene()
         })

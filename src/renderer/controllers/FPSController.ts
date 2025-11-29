@@ -1,4 +1,4 @@
-import { Scene, UniversalCamera, Vector3, ActionManager, KeyboardEventTypes, Axis, Ray, Color3, MeshBuilder, StandardMaterial, Mesh, PhysicsImpostor } from '@babylonjs/core'
+import { Scene, UniversalCamera, Vector3, ActionManager, KeyboardEventTypes, Axis, Ray, Color3, MeshBuilder, StandardMaterial, Mesh, PhysicsImpostor, ExecuteCodeAction, ActionEvent, AbstractMesh } from '@babylonjs/core'
 import { IDamageable } from '../src/interfaces/IDamageable'
 
 export class FPSController {
@@ -305,12 +305,12 @@ export class FPSController {
         // Collision Handling
         bullet.actionManager = new ActionManager(this.scene)
         bullet.actionManager.registerAction(
-            new BABYLON.ExecuteCodeAction(
+            new ExecuteCodeAction(
                 {
-                    trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+                    trigger: ActionManager.OnIntersectionEnterTrigger,
                     parameter: { mesh: null } // Collide with anything
                 },
-                (evt) => {
+                (evt: ActionEvent) => {
                     const hitMesh = evt.source as Mesh
                     if (hitMesh === bullet || hitMesh === this.currentWeapon || hitMesh.name === 'trail') return
 
@@ -358,8 +358,13 @@ export class FPSController {
         // However, for high speed bullets, raycast is often better. But user specifically asked for physics body and gravity factor 0.
 
         // Let's add a simple onCollide to the physics impostor
-        bullet.physicsImpostor.registerOnPhysicsCollide(this.scene.meshes, (main, collided) => {
-            if (collided === this.currentWeapon || collided.name === 'trail' || collided.name === 'skybox') return
+        const impostors = this.scene.meshes
+            .filter(m => m.physicsImpostor)
+            .map(m => m.physicsImpostor!)
+
+        bullet.physicsImpostor.registerOnPhysicsCollide(impostors, (main, collided) => {
+            const collidedMesh = collided.object as AbstractMesh
+            if (collidedMesh === this.currentWeapon || collidedMesh.name === 'trail' || collidedMesh.name === 'skybox') return
 
             // Handle collision logic here (similar to above)
             // ...

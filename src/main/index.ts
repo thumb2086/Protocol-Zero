@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { RepoManager } from './RepoManager'
 // import { GameServer } from './server'
 
 let mainWindow: BrowserWindow | null = null
@@ -44,6 +45,17 @@ app.whenReady().then(() => {
 
     app.on('browser-window-created', (_, window) => {
         optimizer.watchWindowShortcuts(window)
+    })
+
+    // Sync Weapon Repository
+    const repoUrl = 'https://github.com/thumb2086/protocol-foundry-repository.git'
+    const userDataPath = app.getPath('userData')
+    const localRepoPath = join(userDataPath, 'foundry')
+
+    // Run sync in background
+    RepoManager.syncRepository(repoUrl, localRepoPath).then(() => {
+        console.log('[Main] Weapon repository sync finished')
+        // Notify renderer if needed, or renderer can watch file system
     })
 
     // IPC Handler for part equipping

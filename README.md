@@ -86,65 +86,6 @@ Protocol-Zero/
 | **物理引擎** | Havok Physics (WASM) | 角色移動、彈道物理 |
 | **網路層** | Node.js `dgram` (UDP) | P2P 連線、Tick-based Netcode |
 | **版本控制** | Octokit + isomorphic-git | GitHub 整合（自動 Clone/Push） |
-| **開發工具** | Vite + TypeScript | 熱重載、型別安全 |
-
----
-
-## 🗺️ 核心功能
-
-### ✅ 已實現 (Implemented)
-- **第一人稱控制器 (FPS Controller)**
-  - WASD 移動 + 滑鼠視角控制
-  - 慣性系統（加速/摩擦）
-  - 跳躍 + 重力
-  - Pointer Lock API
-
-- **程式化武器生成 (Procedural Weapons)**
-  - Vandal、Phantom、Classic 三種基礎槍型
-  - CSG Boolean 生成機匣、槍管、彈匣
-  - PBR 材質 + 邊緣發光 (Glow Layer)
-
-- **射擊系統 (Gunplay)**
-  - Hitscan 射線檢測
-  - 彈道物理（重力因子可調）
-  - 彈藥系統（當前/備彈）
-  - HUD 顯示（準心、彈藥數）
-
-- **地圖生成 (Map: The Range)**
-  - 訓練場地圖（The Range）
-  - 程式化地板、牆壁、柱子
-  - 動態光照（HemisphericLight + DirectionalLight）
-
-### � 進行中 (In Progress)
-- **模組化零件系統 (Modular Components)**
-  - 零件掛載點系統（TransformNode）
-  - 熱插拔零件（無需重載整把槍）
-  - 零件統計加成（射速、射程、後座力）
-
-- **程式化皮膚 (Procedural Skins)**
-  - DynamicTexture 繪製圖案
-  - Slash、Zebra、Camouflage 等紋理
-
-### 📋 計劃中 (Planned)
-- **網路連線 (Networking)**
-  - UDP Tick-based Server (64Hz)
-  - 延遲補償 (Lag Compensation)
-  - 快照插值 (Snapshot Interpolation)
-
-- **遊戲循環 (Game Loop)**
-  - 13 回合制
-  - 炸彈安裝/拆除
-  - 經濟系統（購買槍枝）
-
-- **GitHub 整合 (GitHub Integration)**
-  - 遊戲內匯出槍枝到 GitHub
-  - 自動 Clone 社群槍枝
-  - GitHub Actions 驗證平衡性
-
----
-
-## 🛠️ 開發工作流
-
 1. **啟動遊戲:** `npm run dev`
 2. **修改藍圖:** 編輯 `blueprints/*.json` 或 `parts/*.json`
 3. **熱重載:** Vite 自動重載，無需重啟

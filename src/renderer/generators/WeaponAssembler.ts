@@ -11,48 +11,13 @@ export class WeaponAssembler {
     }
 
     public generateClassic(position: Vector3): Mesh {
-        // Legacy generation for Classic (can be refactored later)
-        const root = new Mesh('Classic_Root', this.scene)
-        root.position = position
-
-        // 1. Body (Box)
-        const body = MeshBuilder.CreateBox('body', { width: 0.2, height: 0.3, depth: 0.8 }, this.scene)
-        body.position.z = 0.2
-
-        // 2. Grip (Angled Box)
-        const grip = MeshBuilder.CreateBox('grip', { width: 0.18, height: 0.4, depth: 0.25 }, this.scene)
-        grip.rotation.x = Math.PI / 8
-        grip.position.y = -0.3
-        grip.position.z = -0.1
-
-        // 3. Barrel (Cylinder)
-        const barrel = MeshBuilder.CreateCylinder('barrel', { diameter: 0.1, height: 0.4 }, this.scene)
-        barrel.rotation.x = Math.PI / 2
-        barrel.position.z = 0.6
-        barrel.position.y = 0.1
-
-        // Merge meshes
-        const bodyCSG = CSG.FromMesh(body)
-        const gripCSG = CSG.FromMesh(grip)
-        const barrelCSG = CSG.FromMesh(barrel)
-
-        const combo = bodyCSG.union(gripCSG).union(barrelCSG)
-        const mesh = combo.toMesh('Classic_Mesh', null, this.scene)
-
-        // Cleanup primitives
-        body.dispose()
-        grip.dispose()
-        barrel.dispose()
-
-        mesh.parent = root
-
-        // Material
-        const mat = new StandardMaterial('classicMat', this.scene)
-        mat.diffuseColor = new Color3(0.3, 0.3, 0.35) // Dark Grey
-        mat.specularColor = new Color3(0.1, 0.1, 0.1)
-        mesh.material = mat
-
-        return root
+        // Use the new modular assembly system
+        const weapon = this.assembleWeapon('classic', {
+            barrelLength: 0.4,
+            skin: 'default'
+        })
+        weapon.position = position
+        return weapon
     }
 
     public generateVandal(position: Vector3, skin: 'default' | 'gaia' | 'flux' | 'voxel' = 'default'): Mesh {
@@ -66,45 +31,13 @@ export class WeaponAssembler {
     }
 
     public generatePhantom(position: Vector3): Mesh {
-        // Legacy generation for Phantom (can be refactored later)
-        const root = new Mesh('Phantom_Root', this.scene)
-        root.position = position
-
-        // Smooth / Silenced Style
-
-        // Body (Capsule-like or rounded box)
-        const body = MeshBuilder.CreateCylinder('body', { diameter: 0.4, height: 1.5, tessellation: 16 }, this.scene)
-        body.rotation.x = Math.PI / 2
-
-        // Silencer (Thicker cylinder at front)
-        const silencer = MeshBuilder.CreateCylinder('silencer', { diameter: 0.35, height: 0.8 }, this.scene)
-        silencer.rotation.x = Math.PI / 2
-        silencer.position.z = 1.0
-
-        // Grip & Mag (Integrated smooth shape)
-        const grip = MeshBuilder.CreateBox('grip', { width: 0.2, height: 0.6, depth: 0.4 }, this.scene)
-        grip.position.y = -0.4
-        grip.position.z = -0.2
-        grip.rotation.x = Math.PI / 12
-
-        let gunCSG = CSG.FromMesh(body)
-        gunCSG = gunCSG.union(CSG.FromMesh(silencer))
-        gunCSG = gunCSG.union(CSG.FromMesh(grip))
-
-        const mesh = gunCSG.toMesh('Phantom_Mesh', null, this.scene)
-
-        body.dispose()
-        silencer.dispose()
-        grip.dispose()
-
-        mesh.parent = root
-
-        // Material: Matte Camo/Plastic
-        const mat = new StandardMaterial('phantomMat', this.scene)
-        mat.diffuseColor = new Color3(0.2, 0.25, 0.2) // Dark Green/Grey
-        mesh.material = mat
-
-        return root
+        // Use the new modular assembly system
+        const weapon = this.assembleWeapon('phantom', {
+            barrelLength: 0.9,
+            skin: 'default'
+        })
+        weapon.position = position
+        return weapon
     }
 
     /**
@@ -118,15 +51,18 @@ export class WeaponAssembler {
         receiver.parent = root
 
         // 2. Create & Attach Barrel
-        const barrel = this.componentFactory.createBarrel('std', options.barrelLength || 1.0)
+        const barrel = this.componentFactory.createBarrel('std', options.barrelLength || 1.0, type)
         this.attachPart(receiver, barrel, 'barrel_mount')
 
         // 3. Create & Attach Stock
-        const stock = this.componentFactory.createStock('std')
-        this.attachPart(receiver, stock, 'stock_mount')
+        // Classic usually doesn't have a stock, but we can support it if needed
+        if (type !== 'classic') {
+            const stock = this.componentFactory.createStock('std', type === 'phantom' ? 'phantom' : 'vandal')
+            this.attachPart(receiver, stock, 'stock_mount')
+        }
 
         // 4. Create & Attach Magazine
-        const mag = this.componentFactory.createMagazine('std')
+        const mag = this.componentFactory.createMagazine('std', type)
         this.attachPart(receiver, mag, 'mag_mount')
 
         // Apply Skin (Simple material application for now)
@@ -158,7 +94,8 @@ export class WeaponAssembler {
         } else if (skin === 'gaia') {
             mat.diffuseColor = new Color3(0.4, 0.2, 0.1)
         } else {
-            mat.diffuseColor = new Color3(0.2, 0.2, 0.2)
+            // Keep default material if not special skin
+            return
         }
 
         // Apply to all meshes in hierarchy

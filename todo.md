@@ -10,8 +10,8 @@
 - [x] 基礎 Assembler: 將零件組裝成整槍
 
 ### 🚧 進行中
-- [ ] Repo Sync: 寫腳本讓 Electron 啟動時 Clone protocol-foundry-repository 到本地
-- [ ] 完善模組化零件系統
+- [x] Repo Sync: 寫腳本讓 Electron 啟動時 Clone protocol-foundry-repository 到本地
+- [x] 完善模組化零件系統
   - [x] 實作 TransformNode 掛載點系統
   - [x] 實作零件熱插拔（無需重載整把槍）
   - [ ] 實作零件統計加成（fireRate, range, recoil 修飾符）
@@ -27,19 +27,6 @@
 ### ✅ 已完成
 - [x] Controller: Havok Capsule Controller (WASD 移動)
 - [x] Shooting: Raycast Hitscan, Recoil (Camera + Gun Offset)
-- [x] 基礎彈藥系統（當前/備彈）
-- [x] 基礎 HUD（準心、彈藥數）
-
-### 🚧 進行中
-- [ ] 完善射擊系統
-  - [x] 彈道物理（零重力）
-  - [ ] 後座力模型（T字型/7字型 Pattern）
-  - [ ] Spread 擴散（移動時增加）
-  - [ ] 穿牆邏輯（材質衰減率）
-- [ ] VFX/SFX
-  - [ ] 程式化彈孔 (Decals)
-  - [ ] 合成槍聲 (Web Audio API)
-  - [ ] Muzzle Flash（槍口火焰）
   - [ ] Shell Ejection（彈殼拋出）
 
 ### 📝 待實作

@@ -72,6 +72,14 @@ app.whenReady().then(() => {
         }
     })
 
+    // IPC Handler for weapon selection
+    ipcMain.on('weapon:select', (_event, weaponId: string) => {
+        console.log('[Main] Received weapon:select request:', weaponId)
+        if (mainWindow && mainWindow.webContents) {
+            mainWindow.webContents.send('weapon:changed', weaponId)
+        }
+    })
+
     // Start the UDP game server (暫時禁用)
     // if (ENABLE_GAME_SERVER && gameServer) {
     //     console.log('[Protocol: Zero] Starting Game Server...')

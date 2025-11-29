@@ -1,13 +1,17 @@
 import { Scene, MeshBuilder, Vector3, StandardMaterial, Color3, Mesh, CSG, TransformNode, SceneLoader, AbstractMesh } from '@babylonjs/core'
+import { ComponentFactory } from './ComponentFactory'
 
 export class WeaponAssembler {
     private scene: Scene
+    private componentFactory: ComponentFactory
 
     constructor(scene: Scene) {
         this.scene = scene
+        this.componentFactory = new ComponentFactory(scene)
     }
 
     public generateClassic(position: Vector3): Mesh {
+        // Legacy generation for Classic (can be refactored later)
         const root = new Mesh('Classic_Root', this.scene)
         root.position = position
 
@@ -52,140 +56,17 @@ export class WeaponAssembler {
     }
 
     public generateVandal(position: Vector3, skin: 'default' | 'gaia' | 'flux' | 'voxel' = 'default'): Mesh {
-        const root = new Mesh('Vandal_Root', this.scene)
-        root.position = position
-
-        if (skin === 'voxel') {
-            // Voxel Skin: Construct from cubes
-            const voxelSize = 0.05
-            const voxels: Vector3[] = []
-
-            // Define voxel shape (simplified Vandal)
-            // Receiver
-            for (let x = 0; x < 5; x++) for (let y = 0; y < 8; y++) for (let z = 0; z < 24; z++) {
-                if (Math.random() > 0.1) voxels.push(new Vector3(x, y, z))
-            }
-            // Barrel
-            for (let x = 1; x < 4; x++) for (let y = 3; y < 6; y++) for (let z = 24; z < 40; z++) {
-                voxels.push(new Vector3(x, y, z))
-            }
-            // Mag
-            for (let x = 1; x < 4; x++) for (let y = -8; y < 0; y++) for (let z = 4; z < 10; z++) {
-                voxels.push(new Vector3(x, y, z)) // Straight mag for voxel
-            }
-
-            const voxelMesh = MeshBuilder.CreateBox('voxel', { size: voxelSize }, this.scene)
-            voxelMesh.isVisible = false
-
-            voxels.forEach((v, i) => {
-                const inst = voxelMesh.createInstance(`v_${i}`)
-                inst.parent = root
-                inst.position = v.scale(voxelSize).subtract(new Vector3(0.125, 0.2, 0.6)) // Center it
-
-                // Random color variation
-                const mat = new StandardMaterial(`vmat_${i}`, this.scene)
-                mat.diffuseColor = new Color3(0.2 + Math.random() * 0.1, 0.2 + Math.random() * 0.1, 0.8 + Math.random() * 0.2)
-                inst.material = mat
-            })
-
-            return root
-        }
-
-        // Standard CSG Construction for Default, Gaia, Flux
-
-        // Main Receiver
-        const receiver = MeshBuilder.CreateBox('receiver', { width: 0.25, height: 0.4, depth: 1.2 }, this.scene)
-
-        // Stock
-        const stock = MeshBuilder.CreateBox('stock', { width: 0.2, height: 0.3, depth: 0.8 }, this.scene)
-        stock.position.z = -1.0
-        stock.position.y = -0.1
-
-        // Barrel
-        const barrel = MeshBuilder.CreateCylinder('barrel', { diameter: 0.12, height: 1.0 }, this.scene)
-        barrel.rotation.x = Math.PI / 2
-        barrel.position.z = 1.0
-        barrel.position.y = 0.1
-
-        // Magazine
-        const mag = MeshBuilder.CreateBox('mag', { width: 0.15, height: 0.6, depth: 0.3 }, this.scene)
-        mag.rotation.x = Math.PI / 6
-        mag.position.y = -0.5
-        mag.position.z = 0.2
-
-        // CSG Union
-        let gunCSG = CSG.FromMesh(receiver)
-        gunCSG = gunCSG.union(CSG.FromMesh(stock))
-        gunCSG = gunCSG.union(CSG.FromMesh(barrel))
-        gunCSG = gunCSG.union(CSG.FromMesh(mag))
-
-        const mesh = gunCSG.toMesh('Vandal_Mesh', null, this.scene)
-
-        receiver.dispose()
-        stock.dispose()
-        barrel.dispose()
-        mag.dispose()
-
-        mesh.parent = root
-
-        // Skin Specific Details
-        const mat = new StandardMaterial('vandalMat', this.scene)
-
-        if (skin === 'gaia') {
-            // Gaia: Wood & Crystal
-            mat.diffuseColor = new Color3(0.4, 0.2, 0.1) // Wood
-            mat.specularColor = new Color3(0.1, 0.1, 0.1)
-
-            // Add "Roots" (Torus Knots)
-            const roots = MeshBuilder.CreateTorusKnot('roots', { radius: 0.15, tube: 0.02, radialSegments: 64, p: 2, q: 3 }, this.scene)
-            roots.parent = root
-            roots.position.z = 0.2
-            roots.scaling = new Vector3(1, 1, 2)
-            const rootMat = new StandardMaterial('rootMat', this.scene)
-            rootMat.diffuseColor = new Color3(0.5, 0.3, 0.2)
-            roots.material = rootMat
-
-            // Crystal Mag
-            const crystal = MeshBuilder.CreatePolyhedron('crystal', { type: 2, size: 0.15 }, this.scene)
-            crystal.parent = root
-            crystal.position = new Vector3(0, -0.4, 0.2)
-            const crystalMat = new StandardMaterial('crystalMat', this.scene)
-            crystalMat.emissiveColor = new Color3(1, 0, 0) // Red Crystal
-            crystalMat.alpha = 0.8
-            crystal.material = crystalMat
-
-        } else if (skin === 'flux') {
-            // Flux: Sci-Fi White & Blue
-            mat.diffuseColor = new Color3(0.9, 0.9, 0.95) // White Plastic
-            mat.specularColor = new Color3(1, 1, 1)
-
-            // Floating Core
-            const core = MeshBuilder.CreateSphere('fluxCore', { diameter: 0.15 }, this.scene)
-            core.parent = root
-            core.position.z = 0
-            const coreMat = new StandardMaterial('fluxCoreMat', this.scene)
-            coreMat.emissiveColor = new Color3(0, 0.5, 1) // Blue Glow
-            core.material = coreMat
-
-            // Animation for Core
-            this.scene.onBeforeRenderObservable.add(() => {
-                core.scaling.x = 1 + Math.sin(performance.now() * 0.005) * 0.1
-                core.scaling.y = 1 + Math.sin(performance.now() * 0.005) * 0.1
-                core.scaling.z = 1 + Math.sin(performance.now() * 0.005) * 0.1
-            })
-
-        } else {
-            // Default
-            mat.diffuseColor = new Color3(0.1, 0.1, 0.15) // Black Metal
-            mat.emissiveColor = new Color3(0.1, 0.05, 0)
-        }
-
-        mesh.material = mat
-
-        return root
+        // Use the new modular assembly system
+        const weapon = this.assembleWeapon('vandal', {
+            barrelLength: 1.0,
+            skin: skin
+        })
+        weapon.position = position
+        return weapon
     }
 
     public generatePhantom(position: Vector3): Mesh {
+        // Legacy generation for Phantom (can be refactored later)
         const root = new Mesh('Phantom_Root', this.scene)
         root.position = position
 
@@ -225,6 +106,67 @@ export class WeaponAssembler {
 
         return root
     }
+
+    /**
+     * Assemble a weapon from parts
+     */
+    public assembleWeapon(type: 'vandal' | 'phantom' | 'classic', options: any = {}): Mesh {
+        const root = new Mesh(`${type}_Root`, this.scene)
+
+        // 1. Create Receiver (The Core)
+        const receiver = this.componentFactory.createReceiver('core', type)
+        receiver.parent = root
+
+        // 2. Create & Attach Barrel
+        const barrel = this.componentFactory.createBarrel('std', options.barrelLength || 1.0)
+        this.attachPart(receiver, barrel, 'barrel_mount')
+
+        // 3. Create & Attach Stock
+        const stock = this.componentFactory.createStock('std')
+        this.attachPart(receiver, stock, 'stock_mount')
+
+        // 4. Create & Attach Magazine
+        const mag = this.componentFactory.createMagazine('std')
+        this.attachPart(receiver, mag, 'mag_mount')
+
+        // Apply Skin (Simple material application for now)
+        this.applySkin(root, options.skin || 'default')
+
+        return root
+    }
+
+    private attachPart(parentPart: Mesh, childPart: Mesh, mountName: string) {
+        // Find mount point
+        const mountPoint = parentPart.getChildren((node) => node.name === mountName)[0] as TransformNode
+
+        if (mountPoint) {
+            childPart.parent = mountPoint
+            childPart.position = Vector3.Zero()
+            childPart.rotation = Vector3.Zero()
+        } else {
+            console.warn(`Mount point ${mountName} not found on ${parentPart.name}`)
+            childPart.parent = parentPart // Fallback
+        }
+    }
+
+    private applySkin(root: Mesh, skin: string) {
+        const mat = new StandardMaterial(`${skin}Mat`, this.scene)
+
+        if (skin === 'flux') {
+            mat.diffuseColor = new Color3(0.9, 0.9, 0.95)
+            mat.emissiveColor = new Color3(0, 0.2, 0.5)
+        } else if (skin === 'gaia') {
+            mat.diffuseColor = new Color3(0.4, 0.2, 0.1)
+        } else {
+            mat.diffuseColor = new Color3(0.2, 0.2, 0.2)
+        }
+
+        // Apply to all meshes in hierarchy
+        root.getChildMeshes().forEach(m => {
+            m.material = mat
+        })
+    }
+
     public async loadCommunityWeapon(url: string, position: Vector3): Promise<AbstractMesh | null> {
         try {
             const result = await SceneLoader.ImportMeshAsync('', url, '', this.scene)
@@ -254,26 +196,25 @@ export class WeaponAssembler {
         const position = currentWeapon.position.clone()
         const rotation = currentWeapon.rotation.clone()
         const parent = currentWeapon.parent
-        const weaponType = currentWeapon.name.split('_')[0] // e.g., "Vandal_Root" -> "Vandal"
+        const weaponType = currentWeapon.name.split('_')[0].toLowerCase() as 'vandal' | 'phantom' | 'classic'
 
         // Dispose old weapon
         currentWeapon.dispose()
 
         // Generate new weapon based on type
-        let newWeapon: Mesh
+        // In a real scenario, we would update the blueprint and re-assemble
+        // For now, we just re-assemble with default options + the change
 
-        if (weaponType === 'Vandal') {
-            // Apply part data to weapon generation
-            // For now, we'll regenerate with the same skin but could apply partData here
-            newWeapon = this.generateVandal(Vector3.Zero(), 'flux')
-        } else if (weaponType === 'Classic') {
-            newWeapon = this.generateClassic(Vector3.Zero())
-        } else if (weaponType === 'Phantom') {
-            newWeapon = this.generatePhantom(Vector3.Zero())
+        const options: any = { skin: 'flux' } // Default skin
+        if (slot === 'barrel') {
+            options.barrelLength = partData.length || 1.2 // Example change
+        }
+
+        let newWeapon: Mesh
+        if (['vandal', 'phantom', 'classic'].includes(weaponType)) {
+            newWeapon = this.assembleWeapon(weaponType, options)
         } else {
-            // Default fallback
-            console.warn(`[WeaponAssembler] Unknown weapon type: ${weaponType}, defaulting to Vandal`)
-            newWeapon = this.generateVandal(Vector3.Zero(), 'flux')
+            newWeapon = this.assembleWeapon('vandal', options)
         }
 
         // Restore weapon state

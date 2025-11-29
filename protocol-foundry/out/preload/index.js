@@ -85,14 +85,22 @@ const foundryAPI = {
   ensureDir: (dir) => electron.ipcRenderer.invoke("foundry:ensureDir", dir),
   getPath: (type, ...parts) => electron.ipcRenderer.invoke("foundry:getPath", type, ...parts)
 };
+const weaponAPI = {
+  equipPart: (slot, partData) => electron.ipcRenderer.send("equip-part", { slot, partData }),
+  onPartEquipped: (callback) => {
+    electron.ipcRenderer.on("part-equipped", (_event, data) => callback(data));
+  }
+};
 if (process.contextIsolated) {
   try {
     electron.contextBridge.exposeInMainWorld("electron", electronAPI);
     electron.contextBridge.exposeInMainWorld("foundry", foundryAPI);
+    electron.contextBridge.exposeInMainWorld("weapon", weaponAPI);
   } catch (error) {
     console.error(error);
   }
 } else {
   window.electron = electronAPI;
   window.foundry = foundryAPI;
+  window.weapon = weaponAPI;
 }

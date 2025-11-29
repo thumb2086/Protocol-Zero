@@ -12,13 +12,13 @@
 ### 🚧 進行中
 - [ ] Repo Sync: 寫腳本讓 Electron 啟動時 Clone protocol-foundry-repository 到本地
 - [ ] 完善模組化零件系統
-  - [ ] 實作 TransformNode 掛載點系統
-  - [ ] 實作零件熱插拔（無需重載整把槍）
+  - [x] 實作 TransformNode 掛載點系統
+  - [x] 實作零件熱插拔（無需重載整把槍）
   - [ ] 實作零件統計加成（fireRate, range, recoil 修飾符）
 - [ ] 新增更多零件類型
-  - [ ] StockFactory（槍托）
+  - [x] StockFactory（槍托）
   - [ ] ScopeFactory（瞄具）
-  - [ ] MagazineFactory（彈匣）
+  - [x] MagazineFactory（彈匣）
 
 ---
 

@@ -1,4 +1,4 @@
-import { Scene, MeshBuilder, StandardMaterial, Color3, Vector3, Mesh, PointLight, GlowLayer, DynamicTexture, PhysicsImpostor } from '@babylonjs/core'
+import { Scene, MeshBuilder, StandardMaterial, Color3, Vector3, Mesh, GlowLayer, DynamicTexture, PhysicsImpostor } from '@babylonjs/core'
 
 /**
  * Protocol: Zero - Map Generator
@@ -54,10 +54,7 @@ export class MapGenerator {
         // 7. Invisible Physics Boundaries
         this.createInvisibleBoundaries(100, 100)
 
-        // 8. Additional Point Lights (Illuminate the scene)
-        this.createPointLight(new Vector3(0, 5, 20), new Color3(0, 1, 1), 30)
-        this.createPointLight(new Vector3(20, 5, 30), new Color3(1, 0.5, 0), 25)
-        this.createPointLight(new Vector3(-20, 5, 30), new Color3(0.5, 0, 1), 25)
+
 
         console.log('✓ The Range generated with procedural textures')
     }
@@ -350,14 +347,5 @@ export class MapGenerator {
         return platform
     }
 
-    /**
-     * Create point light
-     */
-    private createPointLight(position: Vector3, color: Color3, intensity: number): void {
-        const light = new PointLight('pointLight', position, this.scene)
-        light.diffuse = color
-        light.specular = color
-        light.intensity = intensity
-        light.range = 50
-    }
+
 }

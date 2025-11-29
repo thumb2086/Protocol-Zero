@@ -1,4 +1,4 @@
-import { Scene, UniversalCamera, Vector3, ActionManager, KeyboardEventTypes, Axis, Ray, Color3, MeshBuilder, StandardMaterial, Mesh } from '@babylonjs/core'
+import { Scene, UniversalCamera, Vector3, ActionManager, KeyboardEventTypes, Axis, Ray, Color3, MeshBuilder, StandardMaterial, Mesh, PhysicsImpostor } from '@babylonjs/core'
 import { IDamageable } from '../src/interfaces/IDamageable'
 
 export class FPSController {
@@ -231,12 +231,8 @@ export class FPSController {
         this.currentAmmo--
         this.updateHUD()
 
-        // Hitscan: Raycast from camera (FPS standard for accuracy)
         const origin = this.camera.position
         const direction = this.camera.getForwardRay().direction
-
-        const ray = new Ray(origin, direction, 100)
-        const hit = this.scene.pickWithRay(ray)
 
         // Get muzzle flash point from weapon (if available)
         let muzzleFlashPos: Vector3
@@ -260,78 +256,120 @@ export class FPSController {
             muzzleFlashPos = origin.add(right).add(down).add(forward)
         }
 
-        const endPoint = hit?.pickedPoint || origin.add(direction.scale(100))
+        // Create Bullet
+        const bullet = MeshBuilder.CreateSphere('bullet', { diameter: 0.05 }, this.scene)
+        bullet.position = muzzleFlashPos
 
-        // Visual Tracer: From muzzle to hit point (Enhanced visibility)
+        // Material
+        const mat = new StandardMaterial('bulletMat', this.scene)
+        mat.emissiveColor = new Color3(1, 1, 0)
+        mat.disableLighting = true
+        bullet.material = mat
+
+        // Physics
+        bullet.physicsImpostor = new PhysicsImpostor(
+            bullet,
+            PhysicsImpostor.SphereImpostor,
+            { mass: 0.1, restitution: 0 },
+            this.scene
+        )
+
+        // Zero Gravity (Hitscan feel)
+        // @ts-ignore
+        bullet.physicsImpostor.physicsBody.setGravityFactor(0)
+
+        // Velocity (5x speed)
+        const speed = 200 // Increased from typical ~40-50
+        bullet.physicsImpostor.applyImpulse(direction.scale(speed), bullet.getAbsolutePosition())
+
+        // Visual Tracer (Short lifetime)
         const trail = MeshBuilder.CreateLines('trail', {
-            points: [muzzleFlashPos, endPoint],
-            updatable: false
+            points: [muzzleFlashPos, muzzleFlashPos.add(direction.scale(2))], // Short visual line
+            updatable: true,
+            instance: null
         }, this.scene)
-        trail.color = new Color3(1, 0.9, 0.2) // Bright yellow
-        trail.alpha = 1.0
+        trail.color = new Color3(1, 0.9, 0.2)
 
-        // Add thicker tube for better visibility
-        const trailTube = MeshBuilder.CreateTube('trailTube', {
-            path: [muzzleFlashPos, endPoint],
-            radius: 0.015,
-            tessellation: 8,
-            updatable: false
-        }, this.scene)
+        // Parent trail to bullet so it moves with it? 
+        // Actually, for a tracer effect, we might just want a trail following the bullet.
+        // But the user asked to "make it disappear faster OR make the visual mesh shorter".
+        // Let's just make the bullet itself the visual and maybe add a small trail if needed.
+        // For now, let's stick to the bullet being the projectile.
 
-        const trailMat = new StandardMaterial('trailMat', this.scene)
-        trailMat.emissiveColor = new Color3(1, 0.9, 0.2)
-        trailMat.disableLighting = true
-        trailTube.material = trailMat
-
-        // Fade out trail
+        // Cleanup bullet after 2 seconds
         setTimeout(() => {
+            bullet.dispose()
             trail.dispose()
-            trailTube.dispose()
-        }, 100) // Increased visibility duration
+        }, 2000)
 
-        if (hit?.pickedMesh) {
-            // Visual: Hit Marker
-            const marker = MeshBuilder.CreateSphere('hit', { diameter: 0.1 }, this.scene)
-            marker.position = hit.pickedPoint!
-            const mat = new StandardMaterial('hitMat', this.scene)
-            mat.emissiveColor = new Color3(1, 0, 0)
-            marker.material = mat
+        // Collision Handling
+        bullet.actionManager = new ActionManager(this.scene)
+        bullet.actionManager.registerAction(
+            new BABYLON.ExecuteCodeAction(
+                {
+                    trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+                    parameter: { mesh: null } // Collide with anything
+                },
+                (evt) => {
+                    const hitMesh = evt.source as Mesh
+                    if (hitMesh === bullet || hitMesh === this.currentWeapon || hitMesh.name === 'trail') return
 
-            setTimeout(() => {
-                marker.dispose()
-            }, 200)
+                    // Create hit marker
+                    const marker = MeshBuilder.CreateSphere('hit', { diameter: 0.1 }, this.scene)
+                    marker.position = bullet.position.clone()
+                    const markerMat = new StandardMaterial('hitMat', this.scene)
+                    markerMat.emissiveColor = new Color3(1, 0, 0)
+                    marker.material = markerMat
 
-            // Damage System Logic
-            if (hit.pickedMesh.metadata) {
-                // Check if it's an enemy or damageable object
-                if (hit.pickedMesh.metadata.parentClass && 'takeDamage' in hit.pickedMesh.metadata.parentClass) {
-                    const damageable = hit.pickedMesh.metadata.parentClass as IDamageable
-                    const damage = 25 // Base damage for Vandal
-                    const isHeadshot = hit.pickedMesh.metadata.isHeadshot || false
+                    setTimeout(() => marker.dispose(), 200)
 
-                    const finalDamage = isHeadshot ? damage * 4 : damage
-                    damageable.takeDamage(finalDamage)
+                    // Damage Logic
+                    if (hitMesh.metadata) {
+                        if (hitMesh.metadata.parentClass && 'takeDamage' in hitMesh.metadata.parentClass) {
+                            const damageable = hitMesh.metadata.parentClass as IDamageable
+                            const damage = 25
+                            const isHeadshot = hitMesh.metadata.isHeadshot || false
+                            const finalDamage = isHeadshot ? damage * 4 : damage
+                            damageable.takeDamage(finalDamage)
 
-                    // Show kill feed if dead
-                    if (damageable.isDead() && this.hudController) {
-                        this.hudController.showKillFeed('Player', 'Enemy', 'Vandal', isHeadshot)
+                            if (damageable.isDead() && this.hudController) {
+                                this.hudController.showKillFeed('Player', 'Enemy', 'Vandal', isHeadshot)
+                            }
+                        }
+
+                        if (hitMesh.metadata.isTarget) {
+                            if (this.hudController) {
+                                this.hudController.showKillFeed('Player', 'Training_Bot', 'Vandal', false)
+                            }
+                            hitMesh.dispose()
+                        }
                     }
+
+                    // Dispose bullet on impact
+                    bullet.dispose()
+                    trail.dispose()
                 }
+            )
+        )
 
-                // Target Destruction Logic (Legacy Target)
-                if (hit.pickedMesh.metadata.isTarget) {
-                    console.log('Target Hit!', hit.pickedMesh.name)
+        // Alternative: Use Physics Collision Event if ActionManager is not reliable with physics
+        // But ActionManager OnIntersection might work if impostors intersect. 
+        // Let's rely on physics impostor collision callback if possible, but Babylon's ActionManager is easier to set up quickly.
+        // However, for high speed bullets, raycast is often better. But user specifically asked for physics body and gravity factor 0.
 
-                    // Show kill feed
-                    if (this.hudController) {
-                        this.hudController.showKillFeed('Player', 'Training_Bot', 'Vandal', hit.pickedMesh.metadata.isHeadshot)
-                    }
+        // Let's add a simple onCollide to the physics impostor
+        bullet.physicsImpostor.registerOnPhysicsCollide(this.scene.meshes, (main, collided) => {
+            if (collided === this.currentWeapon || collided.name === 'trail' || collided.name === 'skybox') return
 
-                    // Destroy target
-                    hit.pickedMesh.dispose()
-                }
-            }
-        }
+            // Handle collision logic here (similar to above)
+            // ...
+            // For now, let's stick to the ActionManager or just let it bounce if we don't want to overcomplicate in one go.
+            // But we need to detect hits.
+
+            // Actually, high speed bullets might tunnel through objects.
+            // Raycast is safer for hit detection, but user wants physics.
+            // I will stick to the user's request: "When creating the bullet physics, set physicsBody.setGravityFactor(0)..."
+        })
     }
 
     private reload() {

@@ -3,7 +3,11 @@ import {
     Scene,
     Vector3,
     HemisphericLight,
-    Color4
+    Color4,
+    DirectionalLight,
+    ShadowGenerator,
+    AmmoJSPlugin,
+    PhysicsImpostor
 } from '@babylonjs/core'
 import { CharacterGenerator } from '../generators/CharacterGenerator'
 import { WeaponAssembler } from '../generators/WeaponAssembler'
@@ -14,6 +18,7 @@ import { GitHubWeaponLoader } from '../utils/GitHubWeaponLoader'
 import { UIManager } from '../controllers/UIManager'
 import { FoundryLoader, WeaponMetadata } from '../utils/FoundryLoader'
 import { IPCBridge } from '../utils/IPCBridge'
+import Ammo from 'ammo.js'
 
 console.log('Protocol: Zero - Renderer Process Started')
 
@@ -52,7 +57,7 @@ async function initGame() {
         // Wait for user to click "Start Game"
         uiManager.onStartGame(() => {
             console.log('[Phase 3] Starting Game...')
-            createScene()
+            await createScene()
         })
 
         // Handle exit
@@ -113,9 +118,14 @@ async function initGame() {
     }
 }
 
-function createScene() {
+async function createScene() {
     scene = new Scene(engine)
     scene.clearColor = new Color4(0.1, 0.15, 0.25, 1) // Twilight Blue
+
+    // Enable Physics
+    const ammo = await Ammo()
+    const physicsPlugin = new AmmoJSPlugin(true, ammo)
+    scene.enablePhysics(new Vector3(0, -9.81, 0), physicsPlugin)
 
     // FPS Controller
     fpsController = new FPSController(scene, new Vector3(0, 1.6, -10))
@@ -128,10 +138,17 @@ function createScene() {
 
     // Lighting (Darker cyberpunk atmosphere)
     const light = new HemisphericLight('light1', new Vector3(0, 1, 0), scene)
-    light.intensity = 0.4 // Much darker ambient
+    light.intensity = 0.6 // Base visibility
 
-    const light2 = new HemisphericLight('light2', new Vector3(1, 2, 1), scene)
-    light2.intensity = 0.3 // Subtle fill light
+    // Sun
+    const sun = new DirectionalLight('sun', new Vector3(-0.5, -1, -0.5), scene)
+    sun.position = new Vector3(0, 50, 0)
+    sun.intensity = 3.0
+
+    // Shadows
+    const shadowGenerator = new ShadowGenerator(1024, sun)
+    shadowGenerator.useBlurExponentialShadowMap = true
+    shadowGenerator.blurKernel = 32
 
     // Characters (Far away for showcase)
     console.log('Generating characters...')

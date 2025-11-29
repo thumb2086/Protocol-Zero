@@ -9,22 +9,30 @@
 - [x] CSG Factory: ReceiverFactory, BarrelFactory 實作
 - [x] 基礎 Assembler: 將零件組裝成整槍
 
-### 🚧 進行中
-- [x] Repo Sync: 寫腳本讓 Electron 啟動時 Clone protocol-foundry-repository 到本地
-- [x] 完善模組化零件系統
-  - [x] 實作 TransformNode 掛載點系統
-  - [x] 實作零件熱插拔（無需重載整把槍）
-  - [ ] 實作零件統計加成（fireRate, range, recoil 修飾符）
-- [ ] 新增更多零件類型
-  - [x] StockFactory（槍托）
-  - [ ] ScopeFactory（瞄具）
-  - [x] MagazineFactory（彈匣）
-  - [x] ScopeFactory（瞄具/準鏡）
-  - [x] GripFactory（握把）
-- [x] 完善工廠邏輯
-  - [x] 實作 createScope 方法
-  - [x] 實作 createGrip 方法
-  - [x] 更新 WeaponAssembler 支援 Scope 與 Grip 組裝
+### 🚧 進行中 - 工廠系統完整重構
+- [x] **Blueprint System (藍圖系統)**
+  - [x] BlueprintDefinition.ts: 完整型別定義
+  - [x] BlueprintValidator.ts: 驗證邏輯與平衡限制
+  - [x] PartLibrary.ts: 零件資料庫
+- [x] **Part Designer (零件設計器)**
+  - [x] 更新 ComponentFactory: 改用配置物件 API
+  - [x] 實作數值修飾符系統（metadata 儲存）
+- [x] **Weapon Assembler (組裝器)**
+  - [x] assembleFromBlueprint: 從藍圖生成武器
+  - [x] calculateFinalStats: 計算最終數值
+  - [x] serializeToBlueprint: 匯出藍圖
+- [ ] **Blueprint Manager (藍圖管理)**
+  - [ ] BlueprintManager.ts: 檔案 I/O
+  - [ ] IPC 整合 (preload + main)
+- [ ] **GitHub Sync (GitHub 同步)**
+  - [ ] GitHubSync.ts: Octokit 整合
+  - [ ] Fork + PR 工作流
+  - [ ] 社群藍圖拉取
+- [ ] **Foundry UI Overhaul (UI 改版)**
+  - [ ] Designer Panel: 零件拖放設計器
+  - [ ] Stats Preview: 實時數值預覽
+  - [ ] Blueprint Library: 藍圖瀏覽器
+  - [ ] FoundryController: 新增匯出/上傳方法
 
 ---
 

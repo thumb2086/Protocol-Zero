@@ -1,4 +1,6 @@
 import { Scene, MeshBuilder, Vector3, StandardMaterial, Color3, Mesh, TransformNode, CSG } from '@babylonjs/core'
+import { ScopeConfig, GripConfig } from '../../types/BlueprintDefinition'
+import { SCOPE_LIBRARY, GRIP_LIBRARY } from '../../data/PartLibrary'
 
 export class ComponentFactory {
     private scene: Scene
@@ -295,13 +297,25 @@ export class ComponentFactory {
     }
 
     /**
-     * Create a Scope
+     * Create a scope attachment
+     * @param config - Scope configuration object OR legacy string ID
      */
-    public createScope(id: string, style: 'red_dot' | 'holo' | 'sniper' = 'red_dot'): Mesh {
-        const mesh = new Mesh(`scope_${id}`, this.scene)
+    public createScope(config: ScopeConfig | string): Mesh {
+        // Handle legacy string parameter for backward compatibility
+        let scopeConfig: ScopeConfig
+        if (typeof config === 'string') {
+            scopeConfig = SCOPE_LIBRARY[config] || SCOPE_LIBRARY['red_dot']
+        } else {
+            scopeConfig = config
+        }
+
+        const mesh = new Mesh(`scope_${scopeConfig.type}`, this.scene)
+
         let visual: Mesh
         const mat = new StandardMaterial('scopeMat', this.scene)
         mat.diffuseColor = new Color3(0.1, 0.1, 0.1)
+
+        const style = scopeConfig.type
 
         if (style === 'sniper') {
             // Long Range Scope
@@ -370,13 +384,25 @@ export class ComponentFactory {
     }
 
     /**
-     * Create a Grip
+     * Create a grip attachment
+     * @param config - Grip configuration object OR legacy string ID
      */
-    public createGrip(id: string, style: 'vertical' | 'angled' = 'vertical'): Mesh {
-        const mesh = new Mesh(`grip_${id}`, this.scene)
+    public createGrip(config: GripConfig | string): Mesh {
+        // Handle legacy string parameter for backward compatibility
+        let gripConfig: GripConfig
+        if (typeof config === 'string') {
+            gripConfig = GRIP_LIBRARY[config] || GRIP_LIBRARY['vertical']
+        } else {
+            gripConfig = config
+        }
+
+        const mesh = new Mesh(`grip_${gripConfig.type}`, this.scene)
+
         let visual: Mesh
         const mat = new StandardMaterial('gripMat', this.scene)
         mat.diffuseColor = new Color3(0.12, 0.12, 0.12)
+
+        const style = gripConfig.type
 
         if (style === 'angled') {
             // Angled Foregrip

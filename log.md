@@ -1,9 +1,46 @@
 # 變更日誌
 
-## 2025-11-29
+## 2025-11-30
 
-### 模組化零件系統 (Modular Component System)
-- **新增零件工廠**:
+### 工廠系統完整重構 (Foundry System Redesign)
+- **Blueprint System (藍圖系統)**:
+  - 新增 `BlueprintDefinition.ts`: 完整的武器藍圖型別系統
+    - `WeaponBlueprint`: 主要藍圖介面，包含 id, name, author, components, stats
+    - `WeaponComponents`: 零件配置（receiver, barrel, stock, magazine, scope, grip）
+    - `WeaponStats`: 完整數值定義（傷害、射速、後座力圖案等）
+    - `ScopeConfig`, `GripConfig`, `StockConfig` 等零件配置介面
+    - `createDefaultBlueprint()`: 預設藍圖生成器
+  - 新增 `BlueprintValidator.ts`: 遊戲平衡驗證器
+    - 數值上限檢查（damage <= 100, fireRate <= 1200）
+    - 零件修飾符限制（recoil reduction <= 30%）
+    - 必填欄位驗證
+    - 警告系統（過強組合提示）
+  - 新增 `PartLibrary.ts`: 零件資料庫
+    - `SCOPE_LIBRARY`: 4 種瞄具（red_dot, holo, acog, sniper_8x）
+    - `GRIP_LIBRARY`: 3 種握把（vertical, angled, stub）
+    - `STOCK_LIBRARY`: 3 種槍托（fixed, collapsible, heavy）
+    - `BARREL_LIBRARY`: 4 種槍管（standard, long, short, silenced）
+    - `MAGAZINE_LIBRARY`: 5 種彈匣配置
+    - `SKIN_LIBRARY`: 6 種皮膚（包含 flux, gaia, voxel 等）
+    - 輔助函數：`getPart()`, `getPartsByType()`, `partExists()`
+
+- **Part Designer (零件設計器)**:
+  - 更新 `ComponentFactory.ts`:
+    - `createScope()` 現接受 `ScopeConfig` 物件（保留字串參數向下相容）
+    - `createGrip()` 現接受 `GripConfig` 物件（保留字串參數向下相容）
+    - 所有零件自動儲存配置到 `mesh.metadata`，包含數值修飾符
+    - 新增 PartLibrary 自動查詢邏輯
+
+- **Weapon Assembler (組裝器增強)**:
+  - 新增 `assembleFromBlueprint(blueprint: WeaponBlueprint)`:
+    - 從藍圖 JSON 一鍵生成完整武器
+    - 自動組裝所有零件（receiver, barrel, stock, magazine, scope, grip）
+    - 儲存藍圖到 mesh.metadata
+  - 新增 `calculateFinalStats(blueprint)`:
+    - 計算最終武器數值（基礎值 + 所有零件修飾符）
+    - 槍管：射程和彈速修飾
+    - 瞄具：ADS 速度修飾
+    - 槍托：後座力減免
   - `createScope`: 支援 `red_dot` (紅點), `holo` (全息), `sniper` (狙擊鏡)。
   - `createGrip`: 支援 `vertical` (垂直握把), `angled` (三角握把)。
 - **WeaponAssembler 更新**:

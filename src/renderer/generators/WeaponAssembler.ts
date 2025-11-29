@@ -1,5 +1,7 @@
 import { Scene, MeshBuilder, Vector3, StandardMaterial, Color3, Mesh, CSG, TransformNode, SceneLoader, AbstractMesh } from '@babylonjs/core'
 import { ComponentFactory } from './ComponentFactory'
+import { WeaponBlueprint, WeaponStats, createDefaultBlueprint } from '../../types/BlueprintDefinition'
+import { SCOPE_LIBRARY, GRIP_LIBRARY } from '../../data/PartLibrary'
 
 export class WeaponAssembler {
     private scene: Scene
@@ -78,13 +80,13 @@ export class WeaponAssembler {
 
         // 5. Create & Attach Scope (Optional)
         if (options.scope) {
-            const scope = this.componentFactory.createScope('std', options.scope)
+            const scope = this.componentFactory.createScope(options.scope)
             this.attachPart(receiver, scope, 'scope_mount')
         }
 
         // 6. Create & Attach Grip (Optional)
         if (options.grip) {
-            const grip = this.componentFactory.createGrip('std', options.grip)
+            const grip = this.componentFactory.createGrip(options.grip)
             this.attachPart(receiver, grip, 'grip_mount')
         }
 
@@ -92,6 +94,142 @@ export class WeaponAssembler {
         this.applySkin(root, options.skin || 'default')
 
         return root
+    }
+
+    /**
+     * Assemble weapon from a blueprint
+     */
+    public assembleFromBlueprint(blueprint: WeaponBlueprint): Mesh {
+        const root = new Mesh(`${blueprint.id}_root`, this.scene)
+
+        // Store blueprint in metadata
+        root.metadata = {
+            blueprint,
+            type: blueprint.baseModel,
+            options: {
+                skin: blueprint.skin?.name || 'default'
+            }
+        }
+
+        // 1. Create Receiver
+        const receiver = this.componentFactory.createReceiver('core', blueprint.baseModel)
+        receiver.parent = root
+
+        // 2. Create & Attach Barrel
+        const barrel = this.componentFactory.createBarrel(
+            'std',
+            blueprint.components.barrel.length,
+            blueprint.baseModel
+        )
+        this.attachPart(receiver, barrel, 'barrel_mount')
+
+        // 3. Create & Attach Stock (if configured)
+        if (blueprint.components.stock && blueprint.baseModel !== 'classic') {
+            const stock = this.componentFactory.createStock(
+                'std',
+                blueprint.baseModel === 'phantom' ? 'phantom' : 'vandal'
+            )
+            this.attachPart(receiver, stock, 'stock_mount')
+        }
+
+        // 4. Create & Attach Magazine
+        const mag = this.componentFactory.createMagazine('std', blueprint.baseModel)
+        this.attachPart(receiver, mag, 'mag_mount')
+
+        // 5. Create & Attach Scope (if configured)
+        if (blueprint.components.scope) {
+            const scope = this.componentFactory.createScope(blueprint.components.scope)
+            this.attachPart(receiver, scope, 'scope_mount')
+        }
+
+        // 6. Create & Attach Grip (if configured)
+        if (blueprint.components.grip) {
+            const grip = this.componentFactory.createGrip(blueprint.components.grip)
+            this.attachPart(receiver, grip, 'grip_mount')
+        }
+
+        // Apply skin
+        if (blueprint.skin) {
+            this.applySkin(root, blueprint.skin.name || 'default')
+        }
+
+        return root
+    }
+
+    /**
+     * Calculate final weapon stats with all modifiers applied
+     */
+    public calculateFinalStats(blueprint: WeaponBlueprint): WeaponStats {
+        const stats = { ...blueprint.stats }
+
+        // Apply barrel modifiers
+        if (blueprint.components.barrel) {
+            stats.range *= blueprint.components.barrel.rangeModifier
+        }
+
+        // Apply scope modifiers
+        if (blueprint.components.scope) {
+            stats.adsSpeed *= blueprint.components.scope.adsSpeed
+        }
+
+        // Apply stock modifiers
+        if (blueprint.components.stock) {
+            // Reduce recoil pattern magnitude
+            const recoilReduction = blueprint.components.stock.recoilReduction
+            stats.recoilPattern = stats.recoilPattern.map(([x, y]) => [
+                x * (1 - recoilReduction),
+                y * (1 - recoilReduction)
+            ])
+        }
+
+        // Apply grip modifiers
+        if (blueprint.components.grip) {
+            const recoilReduction = blueprint.components.grip.recoilReduction
+            stats.recoilPattern = stats.recoilPattern.map(([x, y]) => [
+                x * (1 - recoilReduction),
+                y * (1 - recoilReduction)
+            ])
+            stats.movementSpeed *= blueprint.components.grip.adsMovement
+        }
+
+        // Apply magazine modifiers
+        if (blueprint.components.magazine) {
+            stats.magazineSize = blueprint.components.magazine.capacity
+            stats.reloadTime /= blueprint.components.magazine.reloadSpeed
+        }
+
+        return stats
+    }
+
+    /**
+     * Serialize current weapon to blueprint
+     */
+    public static serializeToBlueprint(weaponMesh: Mesh): WeaponBlueprint {
+        const metadata = weaponMesh.metadata
+
+        // If already has blueprint, return it
+        if (metadata && metadata.blueprint) {
+            return metadata.blueprint
+        }
+
+        // Otherwise create default blueprint from current config
+        const weaponType = metadata?.type || 'vandal'
+        const blueprint = createDefaultBlueprint(weaponType as any)
+
+        // Try to extract component configs from child meshes
+        const children = weaponMesh.getChildMeshes()
+        for (const child of children) {
+            if (child.metadata) {
+                if (child.metadata.type === 'scope' && child.metadata.config) {
+                    blueprint.components.scope = child.metadata.config
+                }
+                if (child.metadata.type === 'grip' && child.metadata.config) {
+                    blueprint.components.grip = child.metadata.config
+                }
+            }
+        }
+
+        return blueprint
     }
 
     private attachPart(parentPart: Mesh, childPart: Mesh, mountName: string) {
